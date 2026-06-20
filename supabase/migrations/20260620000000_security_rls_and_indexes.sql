@@ -7,8 +7,9 @@
 --   4. Add indexes for foreign keys flagged by Supabase performance advisors.
 --
 -- IMPORTANT:
--- Review these policies against your frontend data flow before applying to production.
--- In particular, question tables include correct_answer columns, so client-side reads can expose answers.
+-- Review against your frontend before applying directly to production.
+-- Question tables contain correct_answer columns. RLS cannot hide individual columns;
+-- use views/RPCs that omit answers during active exams/quizzes if students should not see them.
 
 begin;
 
@@ -56,68 +57,46 @@ grant execute on function public.current_user_role() to authenticated;
 grant execute on function public.is_admin() to authenticated;
 grant execute on function public.is_instructor_or_admin() to authenticated;
 
--- Harden existing SECURITY DEFINER functions that advisors flagged.
--- Keep handle_new_user executable by Supabase Auth triggers, but not as a public RPC.
+-- Harden existing functions without assuming their signatures.
 do $$
+declare
+  r record;
 begin
-  if exists (
-    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'handle_new_user'
-  ) then
-    alter function public.handle_new_user() set search_path = public, auth;
-    revoke execute on function public.handle_new_user() from anon, authenticated;
-  end if;
+  for r in
+    select p.oid::regprocedure::text as fn, p.proname
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('handle_new_user', 'calculate_topic_mastery')
+  loop
+    execute format('alter function %s set search_path = public, auth', r.fn);
 
-  if exists (
-    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'calculate_topic_mastery'
-  ) then
-    alter function public.calculate_topic_mastery(uuid, uuid) set search_path = public, auth;
-  end if;
+    if r.proname = 'handle_new_user' then
+      execute format('revoke execute on function %s from anon, authenticated', r.fn);
+    end if;
+  end loop;
 end $$;
 
 -- -----------------------------------------------------------------------------
--- Enable RLS
+-- Enable RLS on all exposed application tables
 -- -----------------------------------------------------------------------------
 
-alter table public.profiles enable row level security;
-alter table public.subjects enable row level security;
-alter table public.topics enable row level security;
-alter table public.materials enable row level security;
-alter table public.bookmarks enable row level security;
-alter table public.notes enable row level security;
-alter table public.quizzes enable row level security;
-alter table public.quiz_questions enable row level security;
-alter table public.quiz_attempts enable row level security;
-alter table public.flashcards enable row level security;
-alter table public.flashcard_favorites enable row level security;
-alter table public.study_plans enable row level security;
-alter table public.study_tasks enable row level security;
-alter table public.exams enable row level security;
-alter table public.exam_questions enable row level security;
-alter table public.exam_attempts enable row level security;
-alter table public.exam_attempt_answers enable row level security;
-alter table public.achievements enable row level security;
-alter table public.student_achievements enable row level security;
-alter table public.student_points enable row level security;
-alter table public.study_streaks enable row level security;
-alter table public.notifications enable row level security;
-alter table public.batches enable row level security;
-alter table public.batch_students enable row level security;
-alter table public.batch_subjects enable row level security;
-alter table public.learning_contents enable row level security;
-alter table public.topic_flashcards enable row level security;
-alter table public.topic_quiz_questions enable row level security;
-alter table public.topic_exams enable row level security;
-alter table public.topic_exam_questions enable row level security;
-alter table public.topic_summaries enable row level security;
-alter table public.topic_progress enable row level security;
-alter table public.flashcard_reviews enable row level security;
-alter table public.topic_mastery enable row level security;
-alter table public.topic_exam_attempts enable row level security;
-alter table public.topic_exam_attempt_answers enable row level security;
-alter table public.practice_attempts enable row level security;
-alter table public.practice_questions enable row level security;
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'profiles','subjects','topics','materials','bookmarks','notes','quizzes','quiz_questions',
+    'quiz_attempts','flashcards','flashcard_favorites','study_plans','study_tasks','exams',
+    'exam_questions','exam_attempts','exam_attempt_answers','achievements','student_achievements',
+    'student_points','study_streaks','notifications','batches','batch_students','batch_subjects',
+    'learning_contents','topic_flashcards','topic_quiz_questions','topic_exams','topic_exam_questions',
+    'topic_summaries','topic_progress','flashcard_reviews','topic_mastery','topic_exam_attempts',
+    'topic_exam_attempt_answers','practice_attempts','practice_questions'
+  ] loop
+    execute format('alter table public.%I enable row level security', t);
+  end loop;
+end $$;
 
 -- -----------------------------------------------------------------------------
 -- Profiles
@@ -140,50 +119,28 @@ using (id = (select auth.uid()) or public.is_admin())
 with check (id = (select auth.uid()) or public.is_admin());
 
 -- -----------------------------------------------------------------------------
--- Public learning catalog: readable by signed-in users, writable by staff
+-- Shared learning catalog: signed-in read, staff write
 -- -----------------------------------------------------------------------------
 
-drop policy if exists review_master_subjects_select on public.subjects;
-create policy review_master_subjects_select on public.subjects
-for select to authenticated using (true);
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'subjects','topics','learning_contents','topic_summaries','topic_flashcards','achievements'
+  ] loop
+    execute format('drop policy if exists review_master_authenticated_read on public.%I', t);
+    execute format('create policy review_master_authenticated_read on public.%I for select to authenticated using (true)', t);
 
-drop policy if exists review_master_subjects_write on public.subjects;
-create policy review_master_subjects_write on public.subjects
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
+    execute format('drop policy if exists review_master_staff_write on public.%I', t);
+    execute format(
+      'create policy review_master_staff_write on public.%I for all to authenticated using (public.is_instructor_or_admin()) with check (public.is_instructor_or_admin())',
+      t
+    );
+  end loop;
+end $$;
 
-drop policy if exists review_master_topics_select on public.topics;
-create policy review_master_topics_select on public.topics
-for select to authenticated using (true);
-
-drop policy if exists review_master_topics_write on public.topics;
-create policy review_master_topics_write on public.topics
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_learning_contents_select on public.learning_contents;
-create policy review_master_learning_contents_select on public.learning_contents
-for select to authenticated using (true);
-
-drop policy if exists review_master_learning_contents_write on public.learning_contents;
-create policy review_master_learning_contents_write on public.learning_contents
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_topic_summaries_select on public.topic_summaries;
-create policy review_master_topic_summaries_select on public.topic_summaries
-for select to authenticated using (true);
-
-drop policy if exists review_master_topic_summaries_write on public.topic_summaries;
-create policy review_master_topic_summaries_write on public.topic_summaries
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
--- Materials: signed-in users can read; uploader/staff can manage.
+-- Materials: signed-in users can read; uploader or staff can manage.
 drop policy if exists review_master_materials_select on public.materials;
 create policy review_master_materials_select on public.materials
 for select to authenticated using (true);
@@ -205,35 +162,46 @@ for delete to authenticated
 using (uploaded_by = (select auth.uid()) or public.is_instructor_or_admin());
 
 -- -----------------------------------------------------------------------------
--- Student-owned personal tables
+-- Direct student-owned tables
 -- -----------------------------------------------------------------------------
 
-drop policy if exists review_master_bookmarks_owner on public.bookmarks;
-create policy review_master_bookmarks_owner on public.bookmarks
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
+do $$
+declare
+  item text[];
+  tbl text;
+  col text;
+begin
+  foreach item slice 1 in array array[
+    array['bookmarks','student_id'],
+    array['notes','student_id'],
+    array['flashcard_favorites','student_id'],
+    array['study_plans','student_id'],
+    array['quiz_attempts','student_id'],
+    array['exam_attempts','student_id'],
+    array['topic_exam_attempts','student_id'],
+    array['practice_attempts','user_id'],
+    array['topic_progress','student_id'],
+    array['topic_mastery','student_id'],
+    array['flashcard_reviews','student_id'],
+    array['student_achievements','student_id'],
+    array['student_points','student_id'],
+    array['study_streaks','student_id'],
+    array['notifications','user_id']
+  ] loop
+    tbl := item[1];
+    col := item[2];
 
-drop policy if exists review_master_notes_owner on public.notes;
-create policy review_master_notes_owner on public.notes
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
+    execute format('drop policy if exists review_master_owner_access on public.%I', tbl);
+    execute format(
+      'create policy review_master_owner_access on public.%I for all to authenticated using (%I = (select auth.uid()) or public.is_instructor_or_admin()) with check (%I = (select auth.uid()) or public.is_instructor_or_admin())',
+      tbl, col, col
+    );
+  end loop;
+end $$;
 
-drop policy if exists review_master_flashcard_favorites_owner on public.flashcard_favorites;
-create policy review_master_flashcard_favorites_owner on public.flashcard_favorites
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_study_plans_owner on public.study_plans;
-create policy review_master_study_plans_owner on public.study_plans
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_study_tasks_owner on public.study_tasks;
-create policy review_master_study_tasks_owner on public.study_tasks
+-- Study tasks inherit ownership from their study plan.
+drop policy if exists review_master_study_tasks_owner_access on public.study_tasks;
+create policy review_master_study_tasks_owner_access on public.study_tasks
 for all to authenticated
 using (
   public.is_instructor_or_admin()
@@ -291,70 +259,6 @@ for all to authenticated
 using (created_by = (select auth.uid()) or public.is_instructor_or_admin())
 with check (created_by = (select auth.uid()) or public.is_instructor_or_admin());
 
--- Question tables are staff-managed. SELECT is limited to authenticated users for compatibility,
--- but the presence of correct_answer columns means the frontend should avoid exposing these rows
--- directly during tests. Prefer RPCs/views that omit answers until submission.
-drop policy if exists review_master_quiz_questions_select on public.quiz_questions;
-create policy review_master_quiz_questions_select on public.quiz_questions
-for select to authenticated using (true);
-
-drop policy if exists review_master_quiz_questions_write on public.quiz_questions;
-create policy review_master_quiz_questions_write on public.quiz_questions
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_exam_questions_select on public.exam_questions;
-create policy review_master_exam_questions_select on public.exam_questions
-for select to authenticated using (true);
-
-drop policy if exists review_master_exam_questions_write on public.exam_questions;
-create policy review_master_exam_questions_write on public.exam_questions
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_topic_quiz_questions_select on public.topic_quiz_questions;
-create policy review_master_topic_quiz_questions_select on public.topic_quiz_questions
-for select to authenticated using (true);
-
-drop policy if exists review_master_topic_quiz_questions_write on public.topic_quiz_questions;
-create policy review_master_topic_quiz_questions_write on public.topic_quiz_questions
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_topic_exam_questions_select on public.topic_exam_questions;
-create policy review_master_topic_exam_questions_select on public.topic_exam_questions
-for select to authenticated using (true);
-
-drop policy if exists review_master_topic_exam_questions_write on public.topic_exam_questions;
-create policy review_master_topic_exam_questions_write on public.topic_exam_questions
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_practice_questions_select on public.practice_questions;
-create policy review_master_practice_questions_select on public.practice_questions
-for select to authenticated using (true);
-
-drop policy if exists review_master_practice_questions_write on public.practice_questions;
-create policy review_master_practice_questions_write on public.practice_questions
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
--- Topic flashcards have no status/creator column, so they are readable by signed-in users and managed by staff.
-drop policy if exists review_master_topic_flashcards_select on public.topic_flashcards;
-create policy review_master_topic_flashcards_select on public.topic_flashcards
-for select to authenticated using (true);
-
-drop policy if exists review_master_topic_flashcards_write on public.topic_flashcards;
-create policy review_master_topic_flashcards_write on public.topic_flashcards
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
 -- Topic exams use status where available.
 drop policy if exists review_master_topic_exams_select on public.topic_exams;
 create policy review_master_topic_exams_select on public.topic_exams
@@ -367,22 +271,27 @@ for all to authenticated
 using (public.is_instructor_or_admin())
 with check (public.is_instructor_or_admin());
 
--- -----------------------------------------------------------------------------
--- Attempts, answers, mastery, progress
--- -----------------------------------------------------------------------------
+-- Question tables: readable by signed-in users for compatibility, staff-managed for writes.
+-- NOTE: Because correct_answer columns exist, prefer student-facing views/RPCs that omit answers.
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'quiz_questions','exam_questions','topic_quiz_questions','topic_exam_questions','practice_questions'
+  ] loop
+    execute format('drop policy if exists review_master_questions_read on public.%I', t);
+    execute format('create policy review_master_questions_read on public.%I for select to authenticated using (true)', t);
 
-drop policy if exists review_master_quiz_attempts_owner on public.quiz_attempts;
-create policy review_master_quiz_attempts_owner on public.quiz_attempts
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
+    execute format('drop policy if exists review_master_questions_staff_write on public.%I', t);
+    execute format(
+      'create policy review_master_questions_staff_write on public.%I for all to authenticated using (public.is_instructor_or_admin()) with check (public.is_instructor_or_admin())',
+      t
+    );
+  end loop;
+end $$;
 
-drop policy if exists review_master_exam_attempts_owner on public.exam_attempts;
-create policy review_master_exam_attempts_owner on public.exam_attempts
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
+-- Attempt-answer tables inherit ownership from parent attempts.
 drop policy if exists review_master_exam_attempt_answers_owner on public.exam_attempt_answers;
 create policy review_master_exam_attempt_answers_owner on public.exam_attempt_answers
 for all to authenticated
@@ -403,12 +312,6 @@ with check (
   )
 );
 
-drop policy if exists review_master_topic_exam_attempts_owner on public.topic_exam_attempts;
-create policy review_master_topic_exam_attempts_owner on public.topic_exam_attempts
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
 drop policy if exists review_master_topic_exam_attempt_answers_owner on public.topic_exam_attempt_answers;
 create policy review_master_topic_exam_attempt_answers_owner on public.topic_exam_attempt_answers
 for all to authenticated
@@ -428,68 +331,6 @@ with check (
       and tea.student_id = (select auth.uid())
   )
 );
-
-drop policy if exists review_master_practice_attempts_owner on public.practice_attempts;
-create policy review_master_practice_attempts_owner on public.practice_attempts
-for all to authenticated
-using (user_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (user_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_topic_progress_owner on public.topic_progress;
-create policy review_master_topic_progress_owner on public.topic_progress
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_topic_mastery_owner on public.topic_mastery;
-create policy review_master_topic_mastery_owner on public.topic_mastery
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_flashcard_reviews_owner on public.flashcard_reviews;
-create policy review_master_flashcard_reviews_owner on public.flashcard_reviews
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
--- -----------------------------------------------------------------------------
--- Gamification and notifications
--- -----------------------------------------------------------------------------
-
-drop policy if exists review_master_achievements_select on public.achievements;
-create policy review_master_achievements_select on public.achievements
-for select to authenticated using (true);
-
-drop policy if exists review_master_achievements_write on public.achievements;
-create policy review_master_achievements_write on public.achievements
-for all to authenticated
-using (public.is_instructor_or_admin())
-with check (public.is_instructor_or_admin());
-
-drop policy if exists review_master_student_achievements_owner on public.student_achievements;
-create policy review_master_student_achievements_owner on public.student_achievements
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_student_points_owner on public.student_points;
-create policy review_master_student_points_owner on public.student_points
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_study_streaks_owner on public.study_streaks;
-create policy review_master_study_streaks_owner on public.study_streaks
-for all to authenticated
-using (student_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (student_id = (select auth.uid()) or public.is_instructor_or_admin());
-
-drop policy if exists review_master_notifications_owner on public.notifications;
-create policy review_master_notifications_owner on public.notifications
-for all to authenticated
-using (user_id = (select auth.uid()) or public.is_instructor_or_admin())
-with check (user_id = (select auth.uid()) or public.is_instructor_or_admin());
 
 -- -----------------------------------------------------------------------------
 -- Batches
@@ -547,7 +388,6 @@ with check (public.is_instructor_or_admin());
 -- -----------------------------------------------------------------------------
 
 -- Public buckets can still serve files via public URLs without broad object listing.
--- Remove broad SELECT policies on storage.objects for materials and replace with authenticated read.
 drop policy if exists "Anyone can view materials b9j0vg_0" on storage.objects;
 drop policy if exists review_master_materials_bucket_authenticated_read on storage.objects;
 create policy review_master_materials_bucket_authenticated_read
@@ -558,60 +398,52 @@ using (bucket_id = 'materials');
 -- Foreign key indexes flagged by Supabase advisors
 -- -----------------------------------------------------------------------------
 
-create index if not exists idx_subjects_created_by on public.subjects(created_by);
-create index if not exists idx_topics_subject_id on public.topics(subject_id);
-create index if not exists idx_materials_subject_id on public.materials(subject_id);
-create index if not exists idx_materials_topic_id on public.materials(topic_id);
-create index if not exists idx_materials_uploaded_by on public.materials(uploaded_by);
-create index if not exists idx_bookmarks_student_id on public.bookmarks(student_id);
-create index if not exists idx_bookmarks_material_id on public.bookmarks(material_id);
-create index if not exists idx_notes_student_id on public.notes(student_id);
-create index if not exists idx_notes_material_id on public.notes(material_id);
-create index if not exists idx_quizzes_subject_id on public.quizzes(subject_id);
-create index if not exists idx_quizzes_created_by on public.quizzes(created_by);
-create index if not exists idx_quiz_questions_quiz_id on public.quiz_questions(quiz_id);
-create index if not exists idx_quiz_attempts_quiz_id on public.quiz_attempts(quiz_id);
-create index if not exists idx_quiz_attempts_student_id on public.quiz_attempts(student_id);
-create index if not exists idx_quiz_attempts_topic_id on public.quiz_attempts(topic_id);
-create index if not exists idx_flashcards_subject_id on public.flashcards(subject_id);
-create index if not exists idx_flashcards_topic_id on public.flashcards(topic_id);
-create index if not exists idx_flashcards_created_by on public.flashcards(created_by);
-create index if not exists idx_flashcard_favorites_student_id on public.flashcard_favorites(student_id);
-create index if not exists idx_flashcard_favorites_flashcard_id on public.flashcard_favorites(flashcard_id);
-create index if not exists idx_study_plans_student_id on public.study_plans(student_id);
-create index if not exists idx_study_tasks_study_plan_id on public.study_tasks(study_plan_id);
-create index if not exists idx_exams_subject_id on public.exams(subject_id);
-create index if not exists idx_exams_created_by on public.exams(created_by);
-create index if not exists idx_exam_questions_exam_id on public.exam_questions(exam_id);
-create index if not exists idx_exam_attempts_exam_id on public.exam_attempts(exam_id);
-create index if not exists idx_exam_attempts_student_id on public.exam_attempts(student_id);
-create index if not exists idx_exam_attempt_answers_attempt_id on public.exam_attempt_answers(attempt_id);
-create index if not exists idx_exam_attempt_answers_question_id on public.exam_attempt_answers(question_id);
-create index if not exists idx_student_achievements_student_id on public.student_achievements(student_id);
-create index if not exists idx_student_achievements_achievement_id on public.student_achievements(achievement_id);
-create index if not exists idx_notifications_user_id on public.notifications(user_id);
-create index if not exists idx_batch_students_batch_id on public.batch_students(batch_id);
-create index if not exists idx_batch_students_student_id on public.batch_students(student_id);
-create index if not exists idx_batch_subjects_batch_id on public.batch_subjects(batch_id);
-create index if not exists idx_batch_subjects_subject_id on public.batch_subjects(subject_id);
-create index if not exists idx_learning_contents_topic_id on public.learning_contents(topic_id);
-create index if not exists idx_topic_flashcards_topic_id on public.topic_flashcards(topic_id);
-create index if not exists idx_topic_quiz_questions_topic_id on public.topic_quiz_questions(topic_id);
-create index if not exists idx_topic_exams_topic_id on public.topic_exams(topic_id);
-create index if not exists idx_topic_exam_questions_exam_id on public.topic_exam_questions(exam_id);
-create index if not exists idx_topic_summaries_topic_id on public.topic_summaries(topic_id);
-create index if not exists idx_topic_progress_student_id on public.topic_progress(student_id);
-create index if not exists idx_topic_progress_topic_id on public.topic_progress(topic_id);
-create index if not exists idx_flashcard_reviews_student_id on public.flashcard_reviews(student_id);
-create index if not exists idx_flashcard_reviews_flashcard_id on public.flashcard_reviews(flashcard_id);
-create index if not exists idx_topic_mastery_student_id on public.topic_mastery(student_id);
-create index if not exists idx_topic_mastery_topic_id on public.topic_mastery(topic_id);
-create index if not exists idx_topic_exam_attempts_topic_exam_id on public.topic_exam_attempts(topic_exam_id);
-create index if not exists idx_topic_exam_attempts_student_id on public.topic_exam_attempts(student_id);
-create index if not exists idx_topic_exam_attempt_answers_attempt_id on public.topic_exam_attempt_answers(attempt_id);
-create index if not exists idx_topic_exam_attempt_answers_question_id on public.topic_exam_attempt_answers(question_id);
-create index if not exists idx_practice_attempts_user_id on public.practice_attempts(user_id);
-create index if not exists idx_practice_attempts_topic_id on public.practice_attempts(topic_id);
-create index if not exists idx_practice_questions_topic_id on public.practice_questions(topic_id);
+do $$
+declare
+  item text[];
+  tbl text;
+  col text;
+  idx text;
+begin
+  foreach item slice 1 in array array[
+    array['subjects','created_by'],
+    array['topics','subject_id'],
+    array['materials','subject_id'], array['materials','topic_id'], array['materials','uploaded_by'],
+    array['bookmarks','student_id'], array['bookmarks','material_id'],
+    array['notes','student_id'], array['notes','material_id'],
+    array['quizzes','subject_id'], array['quizzes','created_by'],
+    array['quiz_questions','quiz_id'],
+    array['quiz_attempts','quiz_id'], array['quiz_attempts','student_id'], array['quiz_attempts','topic_id'],
+    array['flashcards','subject_id'], array['flashcards','topic_id'], array['flashcards','created_by'],
+    array['flashcard_favorites','student_id'], array['flashcard_favorites','flashcard_id'],
+    array['study_plans','student_id'], array['study_tasks','study_plan_id'],
+    array['exams','subject_id'], array['exams','created_by'],
+    array['exam_questions','exam_id'],
+    array['exam_attempts','exam_id'], array['exam_attempts','student_id'],
+    array['exam_attempt_answers','attempt_id'], array['exam_attempt_answers','question_id'],
+    array['student_achievements','student_id'], array['student_achievements','achievement_id'],
+    array['notifications','user_id'],
+    array['batch_students','batch_id'], array['batch_students','student_id'],
+    array['batch_subjects','batch_id'], array['batch_subjects','subject_id'],
+    array['learning_contents','topic_id'],
+    array['topic_flashcards','topic_id'],
+    array['topic_quiz_questions','topic_id'],
+    array['topic_exams','topic_id'],
+    array['topic_exam_questions','exam_id'],
+    array['topic_summaries','topic_id'],
+    array['topic_progress','student_id'], array['topic_progress','topic_id'],
+    array['flashcard_reviews','student_id'], array['flashcard_reviews','flashcard_id'],
+    array['topic_mastery','student_id'], array['topic_mastery','topic_id'],
+    array['topic_exam_attempts','topic_exam_id'], array['topic_exam_attempts','student_id'],
+    array['topic_exam_attempt_answers','attempt_id'], array['topic_exam_attempt_answers','question_id'],
+    array['practice_attempts','user_id'], array['practice_attempts','topic_id'],
+    array['practice_questions','topic_id']
+  ] loop
+    tbl := item[1];
+    col := item[2];
+    idx := 'idx_' || tbl || '_' || col;
+    execute format('create index if not exists %I on public.%I(%I)', idx, tbl, col);
+  end loop;
+end $$;
 
 commit;
