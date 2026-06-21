@@ -4,92 +4,109 @@ import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 
-import '../../features/auth/screens/splash_screen.dart';
+import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/analytics/screens/analytics_dashboard_screen.dart';
+import '../../features/analytics/screens/topic_performance_screen.dart';
+import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
-import '../../features/auth/screens/forgot_password_screen.dart';
-
-import '../../features/dashboard/screens/student_dashboard_screen.dart';
-import '../../features/dashboard/screens/instructor_dashboard_screen.dart';
-
-import '../../features/subjects/screens/subjects_screen.dart';
-import '../../features/materials/screens/materials_screen.dart';
-import '../../features/flashcards/screens/flashcards_screen.dart';
-import '../../features/exams/screens/exams_screen.dart';
-import '../../features/analytics/screens/analytics_dashboard_screen.dart';
-
-import '../../features/admin/screens/admin_dashboard_screen.dart';
-
-import '../../shared/widgets/google_shell.dart';
-import '../../features/subjects/screens/subject_details_screen.dart';
-
-import '../../features/materials/screens/upload_material_screen.dart';
-import '../../features/materials/screens/subject_materials_screen.dart';
-import '../../features/subjects/screens/create_subject_screen.dart';
-
-import '../../features/materials/screens/pdf_viewer_screen.dart';
-import '../../features/exams/screens/create_exam_screen.dart';
-import '../../features/exams/screens/take_exam_screen.dart';
-import '../../features/exams/screens/create_question_screen.dart';
-import '../../features/results/screens/results_screen.dart';
-import '../../features/batches/screens/batches_screen.dart';
+import '../../features/auth/screens/splash_screen.dart';
 import '../../features/batches/screens/batch_details_screen.dart';
-import '../../features/topics/screens/topics_screen.dart';
-import '../../features/topics/screens/topic_details_screen.dart';
-import '../../features/topics/screens/summary_screen.dart';
-import '../../features/flashcards/screens/topic_flashcards_screen.dart';
-import '../../features/summaries/screens/topic_summary_screen.dart';
-import '../../features/quizzes/screens/take_quiz_screen.dart';
-import '../../features/exams/screens/topic_exam_screen.dart';
+import '../../features/batches/screens/batches_screen.dart';
+import '../../features/dashboard/screens/instructor_dashboard_screen.dart';
+import '../../features/dashboard/screens/student_dashboard_screen.dart';
+import '../../features/exams/screens/create_exam_screen.dart';
+import '../../features/exams/screens/create_question_screen.dart';
+import '../../features/exams/screens/exams_screen.dart';
+import '../../features/exams/screens/take_exam_screen.dart';
 import '../../features/exams/screens/take_topic_exam_screen.dart';
-import '../../features/practice/screens/practice_quiz_screen.dart';
-import '../../features/practice/screens/practice_quiz_player_screen.dart';
+import '../../features/exams/screens/topic_exam_screen.dart';
+import '../../features/flashcards/screens/flashcards_screen.dart';
+import '../../features/flashcards/screens/topic_flashcards_screen.dart';
+import '../../features/materials/screens/materials_screen.dart';
+import '../../features/materials/screens/pdf_viewer_screen.dart';
+import '../../features/materials/screens/subject_materials_screen.dart';
+import '../../features/materials/screens/upload_material_screen.dart';
 import '../../features/practice/screens/practice_history_screen.dart';
-
-import '../../features/analytics/screens/topic_performance_screen.dart';
+import '../../features/practice/screens/practice_quiz_player_screen.dart';
+import '../../features/practice/screens/practice_quiz_screen.dart';
+import '../../features/quizzes/screens/take_quiz_screen.dart';
+import '../../features/results/screens/results_screen.dart';
 import '../../features/study_planner/screens/study_planner_screen.dart';
-
+import '../../features/subjects/screens/create_subject_screen.dart';
+import '../../features/subjects/screens/subject_details_screen.dart';
+import '../../features/subjects/screens/subjects_screen.dart';
+import '../../features/summaries/screens/topic_summary_screen.dart';
+import '../../features/topics/screens/topic_details_screen.dart';
+import '../../features/topics/screens/topics_screen.dart';
+import '../../shared/widgets/google_shell.dart';
 
 int _getIndexFromLocation(String location) {
-  switch (location) {
-    case '/dashboard':
-      return 0;
+  if (location.startsWith('/subjects')) return 1;
+  if (location.startsWith('/materials') || location.startsWith('/pdf-viewer')) return 2;
+  if (location.startsWith('/flashcards')) return 3;
+  if (location.startsWith('/exams') || location.startsWith('/create-exam') || location.startsWith('/take-exam')) return 4;
+  if (location.startsWith('/results')) return 5;
+  if (location.startsWith('/analytics') || location.startsWith('/topic-performance')) return 6;
+  if (location.startsWith('/study-planner')) return 7;
+  if (location.startsWith('/batches')) return 8;
+  return 0;
+}
 
-    case '/subjects':
-      return 1;
+Widget _routeErrorScreen(String message) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('Something went wrong')),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    ),
+  );
+}
 
-    case '/materials':
-      return 2;
-
-    case '/flashcards':
-      return 3;
-
-    case '/exams':
-      return 4;
-
-    case '/results':
-      return 5;
-
-    case '/analytics':
-      return 6;
-      
-    case '/study-planner':
-      return 7;
-
-    case '/batches':
-      return 8;
-
-    default:
-      return 0;
+void _goToShellDestination(BuildContext context, int index) {
+  switch (index) {
+    case 0:
+      context.go('/dashboard');
+      break;
+    case 1:
+      context.go('/subjects');
+      break;
+    case 2:
+      context.go('/materials');
+      break;
+    case 3:
+      context.go('/flashcards');
+      break;
+    case 4:
+      context.go('/exams');
+      break;
+    case 5:
+      context.go('/results');
+      break;
+    case 6:
+      context.go('/analytics');
+      break;
+    case 7:
+      context.go('/study-planner');
+      break;
+    case 8:
+      context.go('/batches');
+      break;
   }
 }
 
 final appRouter = GoRouter(
   initialLocation: '/',
-
+  errorBuilder: (context, state) => _routeErrorScreen(
+    state.error?.message ?? 'The requested page could not be opened.',
+  ),
   redirect: (context, state) async {
     final loggedIn = AuthService.isLoggedIn;
-
     const publicRoutes = {
       '/',
       '/login',
@@ -97,432 +114,253 @@ final appRouter = GoRouter(
       '/forgot-password',
     };
 
-    final isPublic = publicRoutes.contains(
-      state.matchedLocation,
-    );
+    final isPublic = publicRoutes.contains(state.matchedLocation);
 
     if (!loggedIn && !isPublic) {
       return '/login';
     }
 
-    String? role;
+    final role = loggedIn ? await ProfileService.getUserRole() : null;
 
-    if (loggedIn) {
-      role = await ProfileService.getUserRole();
-    }
-
-    // User already logged in
     if (loggedIn && isPublic) {
       switch (role) {
         case 'admin':
           return '/admin';
-
         case 'instructor':
           return '/instructor';
-
         case 'student':
         default:
           return '/dashboard';
       }
     }
 
-    // Student protection
-    if (role == 'student' &&
-        state.matchedLocation.startsWith('/admin')) {
+    if (role == 'student' && state.matchedLocation.startsWith('/admin')) {
       return '/dashboard';
     }
 
-    if (role == 'student' &&
-        state.matchedLocation.startsWith('/instructor')) {
+    if (role == 'student' && state.matchedLocation.startsWith('/instructor')) {
       return '/dashboard';
     }
 
-    // Instructor protection
-    if (role == 'instructor' &&
-        state.matchedLocation.startsWith('/admin')) {
+    if (role == 'instructor' && state.matchedLocation.startsWith('/admin')) {
       return '/instructor';
     }
 
     return null;
   },
-
   routes: [
-    // Authentication Routes
     GoRoute(
       path: '/',
-      builder: (context, state) =>
-          const SplashScreen(),
+      builder: (context, state) => const SplashScreen(),
     ),
-
     GoRoute(
       path: '/login',
-      builder: (context, state) =>
-          const LoginScreen(),
+      builder: (context, state) => const LoginScreen(),
     ),
-
     GoRoute(
       path: '/register',
-      builder: (context, state) =>
-          const RegisterScreen(),
+      builder: (context, state) => const RegisterScreen(),
     ),
-
     GoRoute(
       path: '/forgot-password',
-      builder: (context, state) =>
-          const ForgotPasswordScreen(),
+      builder: (context, state) => const ForgotPasswordScreen(),
     ),
-
-    // Student Google UI Shell
     ShellRoute(
-      builder: (
-        context,
-        state,
-        child,
-      ) {
+      builder: (context, state, child) {
         return GoogleShell(
-          selectedIndex: _getIndexFromLocation(
-            state.matchedLocation,
-          ),
-     onDestinationSelected: (index) {
-  switch (index) {
-    case 0:
-      context.go('/dashboard');
-      break;
-
-    case 1:
-      context.go('/subjects');
-      break;
-
-    case 2:
-      context.go('/materials');
-      break;
-
-    case 3:
-      context.go('/flashcards');
-      break;
-
-    case 4:
-      context.go('/exams');
-      break;
-
-    case 5:
-      context.go('/results');
-      break;
-
-    case 6:
-      context.go('/analytics');
-      break;
-    case 7:
-      context.go('/study-planner');
-      break;
-
-    case 8:
-      context.go('/batches');
-      break;
-  }
-},
+          selectedIndex: _getIndexFromLocation(state.matchedLocation),
+          onDestinationSelected: (index) => _goToShellDestination(context, index),
           child: child,
         );
       },
       routes: [
-  GoRoute(
-    path: '/dashboard',
-    builder: (context, state) =>
-        const StudentDashboardScreen(),
-  ),
+        GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => const StudentDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/batches',
+          builder: (context, state) => const BatchesScreen(),
+        ),
+        GoRoute(
+          path: '/batches/:batchId',
+          builder: (context, state) {
+            final batchId = state.pathParameters['batchId']!;
+            return BatchDetailsScreen(batchId: batchId);
+          },
+        ),
+        GoRoute(
+          path: '/subjects',
+          builder: (context, state) => const SubjectsScreen(),
+        ),
+        GoRoute(
+          path: '/create-subject',
+          builder: (context, state) => const CreateSubjectScreen(),
+        ),
+        GoRoute(
+          path: '/subjects/:id',
+          builder: (context, state) {
+            final subjectId = state.pathParameters['id']!;
+            return SubjectDetailsScreen(subjectId: subjectId);
+          },
+        ),
+        GoRoute(
+          path: '/subjects/:id/topics',
+          builder: (context, state) {
+            final subjectId = state.pathParameters['id']!;
+            return TopicsScreen(subjectId: subjectId);
+          },
+        ),
+        GoRoute(
+          path: '/subjects/:id/materials',
+          builder: (context, state) {
+            final subjectId = state.pathParameters['id']!;
+            return SubjectMaterialsScreen(subjectId: subjectId);
+          },
+        ),
+        GoRoute(
+          path: '/subjects/:id/upload-material',
+          builder: (context, state) {
+            final subjectId = state.pathParameters['id']!;
+            return UploadMaterialScreen(subjectId: subjectId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return TopicDetailsScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/summary',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return TopicSummaryScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/flashcards',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return TopicFlashcardsScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/quiz',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return TakeQuizScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/practice',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return PracticeQuizScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/practice/history',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return PracticeHistoryScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/practice/play',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return PracticeQuizPlayerScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/topics/:topicId/exam',
+          builder: (context, state) {
+            final topicId = state.pathParameters['topicId']!;
+            return TopicExamScreen(topicId: topicId);
+          },
+        ),
+        GoRoute(
+          path: '/take-topic-exam/:examId',
+          builder: (context, state) {
+            final examId = state.pathParameters['examId']!;
+            return TakeTopicExamScreen(examId: examId);
+          },
+        ),
+        GoRoute(
+          path: '/topic-performance',
+          builder: (context, state) => const TopicPerformanceScreen(),
+        ),
+        GoRoute(
+          path: '/materials',
+          builder: (context, state) => const MaterialsScreen(),
+        ),
+        GoRoute(
+          path: '/pdf-viewer',
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is! Map<String, dynamic>) {
+              return _routeErrorScreen('Unable to open this PDF because the file details were missing.');
+            }
 
-  GoRoute(
-  path: '/batches',
-  builder: (
-    context,
-    state,
-  ) =>
-      const BatchesScreen(),
-),
+            final title = extra['title'];
+            final pdfUrl = extra['pdfUrl'];
 
-GoRoute(
-  path: '/batches/:batchId',
-  builder: (context, state) {
-    final batchId =
-        state.pathParameters['batchId']!;
+            if (title is! String || pdfUrl is! String || title.isEmpty || pdfUrl.isEmpty) {
+              return _routeErrorScreen('Unable to open this PDF because the file details were invalid.');
+            }
 
-    return BatchDetailsScreen(
-      batchId: batchId,
-    );
-  },
-),
-
-  GoRoute(
-    path: '/subjects',
-    builder: (context, state) =>
-        const SubjectsScreen(),
-  ),
-
-  GoRoute(
-    path: '/create-subject',
-    builder: (context, state) =>
-        const CreateSubjectScreen(),
-  ),
-
-  GoRoute(
-    path: '/subjects/:id',
-    builder: (context, state) {
-      final subjectId =
-          state.pathParameters['id']!;
-
-      return SubjectDetailsScreen(
-        subjectId: subjectId,
-      );
-    },
-  ),
-
-  GoRoute(
-  path: '/subjects/:id/topics',
-  builder: (context, state) {
-    final subjectId =
-        state.pathParameters['id']!;
-
-    return TopicsScreen(
-      subjectId: subjectId,
-    );
-  },
-),
-
-GoRoute(
-  path: '/topics/:topicId',
-  builder: (context, state) {
-    final topicId =
-        state.pathParameters['topicId']!;
-
-    return TopicDetailsScreen(
-      topicId: topicId,
-    );
-  },
-),
-
-GoRoute(
-  path: '/topics/:topicId/summary',
-  builder: (context, state) {
-    return TopicSummaryScreen(
-      topicId:
-          state.pathParameters['topicId']!,
-    );
-  },
-),
-GoRoute(
-  path: '/topics/:topicId/flashcards',
-  builder: (context, state) {
-    final topicId =
-        state.pathParameters['topicId']!;
-
-    return TopicFlashcardsScreen(
-      topicId: topicId,
-    );
-  },
-),
-
-GoRoute(
-  path: '/topics/:topicId/quiz',
-  builder: (context, state) {
-    return TakeQuizScreen(
-      topicId:
-          state.pathParameters[
-              'topicId']!,
-    );
-  },
-),
-
-GoRoute(
-  path: '/topics/:topicId/practice',
-  builder: (context, state) {
-    return PracticeQuizScreen(
-      topicId:
-          state.pathParameters['topicId']!,
-    );
-  },
-),
-
-GoRoute(
-  path:
-      '/topics/:topicId/practice/history',
-  builder: (
-    context,
-    state,
-  ) {
-    return PracticeHistoryScreen(
-      topicId:
-          state.pathParameters[
-              'topicId']!,
-    );
-  },
-),
-
-GoRoute(
-  path: '/topic-performance',
-  builder: (context, state) =>
-      const TopicPerformanceScreen(),
-),
-
-GoRoute(
-  path: '/topics/:topicId/practice/play',
-  builder: (context, state) {
-    return PracticeQuizPlayerScreen(
-      topicId:
-          state.pathParameters['topicId']!,
-    );
-  },
-),
-
-GoRoute(
-  path: '/topics/:topicId/exam',
-  builder: (context, state) {
-    final topicId =
-        state.pathParameters['topicId']!;
-
-    return TopicExamScreen(
-      topicId: topicId,
-    );
-  },
-),
-
-
-GoRoute(
-  path: '/take-topic-exam/:examId',
-  builder: (context, state) {
-    return TakeTopicExamScreen(
-      examId:
-          state.pathParameters['examId']!,
-    );
-  },
-),
-
-  GoRoute(
-    path: '/subjects/:id/materials',
-    builder: (context, state) {
-      final subjectId =
-          state.pathParameters['id']!;
-
-      return SubjectMaterialsScreen(
-        subjectId: subjectId,
-      );
-    },
-  ),
-
-  GoRoute(
-    path: '/subjects/:id/upload-material',
-    builder: (context, state) {
-      final subjectId =
-          state.pathParameters['id']!;
-
-      return UploadMaterialScreen(
-        subjectId: subjectId,
-      );
-    },
-  ),
-
-  GoRoute(
-    path: '/materials',
-    builder: (context, state) =>
-        const MaterialsScreen(),
-  ),
-
-GoRoute(
-  path: '/pdf-viewer',
-  builder: (context, state) {
-    final extra =
-        state.extra
-            as Map<String, dynamic>;
-
-    return PdfViewerScreen(
-      title:
-          extra['title'] as String,
-      pdfUrl:
-          extra['pdfUrl'] as String,
-    );
-  },
-),
-
-  GoRoute(
-    path: '/flashcards',
-    builder: (context, state) =>
-        const FlashcardsScreen(),
-  ),
-
-  GoRoute(
-    path: '/exams',
-    builder: (context, state) =>
-        const ExamsScreen(),
-  ),
-
-  GoRoute(
-  path: '/create-exam',
-  builder: (context, state) =>
-      const CreateExamScreen(),
-),
-
-GoRoute(
-  path: '/create-question/:examId',
-  builder: (context, state) {
-    final examId =
-        state.pathParameters['examId']!;
-
-    return CreateQuestionScreen(
-      examId: examId,
-    );
-  },
-),
-
-GoRoute(
-  path: '/take-exam/:id',
-  builder: (context, state) {
-    final examId =
-        state.pathParameters['id']!;
-
-    return TakeExamScreen(
-      examId: examId,
-    );
-  },
-),
-
-GoRoute(
-  path: '/results',
-  builder: (
-    context,
-    state,
-  ) =>
-      const ResultsScreen(),
-),
-
-
-  GoRoute(
-    path: '/analytics',
-    builder: (context, state) =>
-        const AnalyticsDashboardScreen(),
-  ),
-
-  GoRoute(
-  path: '/study-planner',
-  builder: (context, state) =>
-      const StudyPlannerScreen(),
-),
-
-],
+            return PdfViewerScreen(title: title, pdfUrl: pdfUrl);
+          },
+        ),
+        GoRoute(
+          path: '/flashcards',
+          builder: (context, state) => const FlashcardsScreen(),
+        ),
+        GoRoute(
+          path: '/exams',
+          builder: (context, state) => const ExamsScreen(),
+        ),
+        GoRoute(
+          path: '/create-exam',
+          builder: (context, state) => const CreateExamScreen(),
+        ),
+        GoRoute(
+          path: '/create-question/:examId',
+          builder: (context, state) {
+            final examId = state.pathParameters['examId']!;
+            return CreateQuestionScreen(examId: examId);
+          },
+        ),
+        GoRoute(
+          path: '/take-exam/:id',
+          builder: (context, state) {
+            final examId = state.pathParameters['id']!;
+            return TakeExamScreen(examId: examId);
+          },
+        ),
+        GoRoute(
+          path: '/results',
+          builder: (context, state) => const ResultsScreen(),
+        ),
+        GoRoute(
+          path: '/analytics',
+          builder: (context, state) => const AnalyticsDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/study-planner',
+          builder: (context, state) => const StudyPlannerScreen(),
+        ),
+      ],
     ),
-
-
-
-    // Admin Area
     GoRoute(
       path: '/admin',
-      builder: (context, state) =>
-          const AdminDashboardScreen(),
+      builder: (context, state) => const AdminDashboardScreen(),
     ),
-
-    // Instructor Area
     GoRoute(
       path: '/instructor',
-      builder: (context, state) =>
-          const InstructorDashboardScreen(),
+      builder: (context, state) => const InstructorDashboardScreen(),
     ),
   ],
 );
