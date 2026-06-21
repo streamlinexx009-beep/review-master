@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 class StudentDashboardScreen extends StatelessWidget {
-  const StudentDashboardScreen({
-    super.key,
-  });
+  const StudentDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,90 +12,11 @@ class StudentDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hi, Review Master! 👋',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Your average activity this week is 75%, it is very good enough.',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: const Text(
-                  '01 Aug 2026',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
+          _DashboardHeader(),
+          const SizedBox(height: 28),
+          const _MetricsGrid(),
           const SizedBox(height: 34),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final count = constraints.maxWidth > 1200
-                  ? 4
-                  : constraints.maxWidth > 760
-                      ? 2
-                      : 1;
-
-              return GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: count,
-                crossAxisSpacing: 18,
-                mainAxisSpacing: 18,
-                childAspectRatio: count == 1 ? 2.25 : 1.75,
-                children: const [
-                  _MetricCard(
-                    title: 'Total class',
-                    value: '100',
-                    trend: '15%',
-                    positive: true,
-                    variant: _MetricVariant.bars,
-                  ),
-                  _MetricCard(
-                    title: 'Total students',
-                    value: '124',
-                    trend: '10%',
-                    positive: true,
-                    variant: _MetricVariant.line,
-                  ),
-                  _MetricCard(
-                    title: 'Gross score',
-                    value: '91%',
-                    trend: '10%',
-                    positive: false,
-                    variant: _MetricVariant.profit,
-                  ),
-                  _MetricCard(
-                    title: 'Total visits',
-                    value: '248k',
-                    trend: '25%',
-                    positive: true,
-                    variant: _MetricVariant.bars,
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 36),
-          _SectionHeader(
+          const _SectionHeader(
             title: 'Upcoming class',
             subtitle: 'Today, you have 3 upcoming class',
             action: 'More',
@@ -130,35 +49,79 @@ class StudentDashboardScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 36),
-          Text(
-            'Classroom',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
+          const SizedBox(height: 34),
+          Text('Classroom', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              const _FilterButton(label: 'All category'),
-              const SizedBox(width: 14),
-              const _FilterButton(label: 'All status'),
-              const Spacer(),
-              SizedBox(
-                width: 260,
-                height: 50,
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search class',
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const _ClassroomFilters(),
           const SizedBox(height: 18),
           const _ClassroomTable(),
         ],
       ),
+    );
+  }
+}
+
+class _DashboardHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Hi, Review Master! 👋', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 8),
+              Text(
+                'Your average activity this week is 75%, it is very good enough.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const Text('01 Aug 2026', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricsGrid extends StatelessWidget {
+  const _MetricsGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = constraints.maxWidth > 1220
+            ? 4
+            : constraints.maxWidth > 760
+                ? 2
+                : 1;
+
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: count,
+          crossAxisSpacing: 18,
+          mainAxisSpacing: 18,
+          childAspectRatio: count == 1 ? 2.25 : 1.62,
+          children: const [
+            _MetricCard(title: 'Total class', value: '100', trend: '15%', positive: true, variant: _MetricVariant.bars),
+            _MetricCard(title: 'Total students', value: '124', trend: '10%', positive: true, variant: _MetricVariant.line),
+            _MetricCard(title: 'Gross score', value: '91%', trend: '10%', positive: false, variant: _MetricVariant.profit),
+            _MetricCard(title: 'Total visits', value: '248k', trend: '25%', positive: true, variant: _MetricVariant.bars),
+          ],
+        );
+      },
     );
   }
 }
@@ -168,11 +131,7 @@ class _SectionHeader extends StatelessWidget {
   final String subtitle;
   final String action;
 
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
-    required this.action,
-  });
+  const _SectionHeader({required this.title, required this.subtitle, required this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +182,7 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -232,6 +191,8 @@ class _MetricCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: AppColors.text,
                           fontWeight: FontWeight.w800,
@@ -240,11 +201,7 @@ class _MetricCard extends StatelessWidget {
                 ),
                 Text(
                   variant == _MetricVariant.profit ? 'Export' : 'View details',
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 12),
                 ),
               ],
             ),
@@ -254,22 +211,26 @@ class _MetricCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        value,
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                            ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          value,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w900),
+                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       _TrendPill(trend: trend, positive: positive),
                     ],
                   ),
                 ),
+                const SizedBox(width: 10),
                 SizedBox(
-                  width: 116,
-                  height: 86,
+                  width: 96,
+                  height: 78,
                   child: _MiniChart(variant: variant, positive: positive),
                 ),
               ],
@@ -332,10 +293,10 @@ class _MiniChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.end,
           children: const [
-            _ChartBar(height: 36, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 28, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 50, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 38, color: AppColors.error),
+            _ChartBar(height: 32, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 26, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 45, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 36, color: AppColors.error),
           ],
         );
       case _MetricVariant.bars:
@@ -343,10 +304,10 @@ class _MiniChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const _ChartBar(height: 56, color: Color(0xFFF0F2F5)),
-            const _ChartBar(height: 42, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 78, color: positive ? AppColors.primary : AppColors.error),
-            const _ChartBar(height: 60, color: Color(0xFFF0F2F5)),
+            const _ChartBar(height: 50, color: Color(0xFFF0F2F5)),
+            const _ChartBar(height: 38, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 68, color: positive ? AppColors.primary : AppColors.error),
+            const _ChartBar(height: 54, color: Color(0xFFF0F2F5)),
           ],
         );
     }
@@ -362,9 +323,9 @@ class _ChartBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
+      width: 18,
       height: height,
-      margin: const EdgeInsets.only(left: 7),
+      margin: const EdgeInsets.only(left: 5),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(5),
@@ -415,7 +376,7 @@ class _ClassCard extends StatelessWidget {
     final foreground = highlighted ? Colors.white : AppColors.text;
 
     return Container(
-      width: highlighted ? 390 : 390,
+      width: 390,
       margin: const EdgeInsets.only(right: 18),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -424,11 +385,7 @@ class _ClassCard extends StatelessWidget {
         border: Border.all(color: highlighted ? Colors.transparent : AppColors.border),
         boxShadow: highlighted
             ? const [
-                BoxShadow(
-                  color: Color(0x330F9F9A),
-                  blurRadius: 22,
-                  offset: Offset(0, 12),
-                ),
+                BoxShadow(color: Color(0x330F9F9A), blurRadius: 22, offset: Offset(0, 12)),
               ]
             : null,
       ),
@@ -440,40 +397,27 @@ class _ClassCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    color: highlighted ? Colors.white : AppColors.text,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: foreground, fontSize: 12, fontWeight: FontWeight.w800),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: highlighted ? Colors.white.withOpacity(.16) : AppColors.mutedSurface,
+                  color: highlighted ? Colors.white.withValues(alpha: .16) : AppColors.mutedSurface,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text(
-                  time,
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                child: Text(time, style: TextStyle(color: foreground, fontSize: 12, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           Text(
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w900,
-                  height: 1.25,
-                ),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: foreground, fontWeight: FontWeight.w900, height: 1.25),
           ),
           const Spacer(),
           Row(
@@ -483,7 +427,7 @@ class _ClassCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   backgroundColor: highlighted ? AppColors.secondary : Colors.transparent,
                   foregroundColor: highlighted ? Colors.white : AppColors.secondary,
-                  side: BorderSide(color: highlighted ? AppColors.secondary : AppColors.secondary),
+                  side: const BorderSide(color: AppColors.secondary),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                 ),
                 child: Text(buttonText),
@@ -544,6 +488,48 @@ class _SmallAvatar extends StatelessWidget {
   }
 }
 
+class _ClassroomFilters extends StatelessWidget {
+  const _ClassroomFilters();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 760;
+        if (compact) {
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _FilterButton(label: 'All category'),
+              SizedBox(height: 12),
+              _FilterButton(label: 'All status'),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            const _FilterButton(label: 'All category'),
+            const SizedBox(width: 14),
+            const _FilterButton(label: 'All status'),
+            const Spacer(),
+            SizedBox(
+              width: 260,
+              height: 50,
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search class',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _FilterButton extends StatelessWidget {
   final String label;
 
@@ -579,37 +565,22 @@ class _ClassroomTable extends StatelessWidget {
     return Card(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
-        child: Column(
-          children: const [
-            _TableRowItem(header: true),
-            Divider(height: 1, color: AppColors.border),
-            _TableRowItem(
-              title: 'UI/UX fundamental',
-              category: 'UI/UX',
-              duration: '14 Hours',
-              status: 'In progress',
-              completed: '9/16 Completed',
-              progress: .72,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: 1120,
+            child: Column(
+              children: const [
+                _TableRowItem(header: true),
+                Divider(height: 1, color: AppColors.border),
+                _TableRowItem(title: 'UI/UX fundamental', category: 'UI/UX', duration: '14 Hours', status: 'In progress', completed: '9/16 Completed', progress: .72),
+                Divider(height: 1, color: AppColors.border),
+                _TableRowItem(title: 'Anatomy mastery review', category: 'Science', duration: '10 Hours', status: 'Upcoming', completed: '4/12 Completed', progress: .34),
+                Divider(height: 1, color: AppColors.border),
+                _TableRowItem(title: 'Pharmacology drills', category: 'Health', duration: '18 Hours', status: 'Completed', completed: '20/20 Completed', progress: 1),
+              ],
             ),
-            Divider(height: 1, color: AppColors.border),
-            _TableRowItem(
-              title: 'Anatomy mastery review',
-              category: 'Science',
-              duration: '10 Hours',
-              status: 'Upcoming',
-              completed: '4/12 Completed',
-              progress: .34,
-            ),
-            Divider(height: 1, color: AppColors.border),
-            _TableRowItem(
-              title: 'Pharmacology drills',
-              category: 'Health',
-              duration: '18 Hours',
-              status: 'Completed',
-              completed: '20/20 Completed',
-              progress: 1,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -637,27 +608,21 @@ class _TableRowItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(
-      fontWeight: header ? FontWeight.w800 : FontWeight.w600,
-      color: header ? AppColors.text : AppColors.textMuted,
-    );
+    final style = TextStyle(fontWeight: header ? FontWeight.w800 : FontWeight.w600, color: header ? AppColors.text : AppColors.textMuted);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       color: header ? AppColors.surface : Colors.white,
       child: Row(
         children: [
-          SizedBox(
-            width: 26,
-            child: Checkbox(value: false, onChanged: header ? (_) {} : (_) {}),
-          ),
+          SizedBox(width: 26, child: Checkbox(value: false, onChanged: (_) {})),
           const SizedBox(width: 8),
-          Expanded(flex: 3, child: Text(title, style: style)),
-          Expanded(flex: 2, child: header ? Text('Student', style: style) : const _AvatarStack()),
-          Expanded(flex: 2, child: Text(category, style: style)),
-          Expanded(flex: 2, child: Text(duration, style: style)),
-          Expanded(
-            flex: 2,
+          SizedBox(width: 230, child: Text(title, style: style, overflow: TextOverflow.ellipsis)),
+          SizedBox(width: 160, child: header ? Text('Student', style: style) : const _AvatarStack()),
+          SizedBox(width: 150, child: Text(category, style: style)),
+          SizedBox(width: 140, child: Text(duration, style: style)),
+          SizedBox(
+            width: 170,
             child: header
                 ? Text(status, style: style)
                 : Align(
@@ -668,18 +633,12 @@ class _TableRowItem extends StatelessWidget {
                         color: status == 'In progress' ? AppColors.secondarySoft : AppColors.primarySoft,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: Text(
-                        status,
-                        style: const TextStyle(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      child: Text(status, style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w800)),
                     ),
                   ),
           ),
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 190,
             child: header
                 ? Text(completed, style: style)
                 : Column(
@@ -687,12 +646,7 @@ class _TableRowItem extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 7,
-                          color: AppColors.secondary,
-                          backgroundColor: AppColors.mutedSurface,
-                        ),
+                        child: LinearProgressIndicator(value: progress, minHeight: 7, color: AppColors.secondary, backgroundColor: AppColors.mutedSurface),
                       ),
                       const SizedBox(height: 7),
                       Text(completed, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
