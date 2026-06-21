@@ -3,120 +3,66 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/batch_model.dart';
 import 'batch_repository.dart';
 
-class BatchRepositoryImpl
-    implements BatchRepository {
+class BatchRepositoryImpl implements BatchRepository {
   final SupabaseClient supabase;
 
-  BatchRepositoryImpl(
-    this.supabase,
-  );
+  BatchRepositoryImpl(this.supabase);
 
   @override
-  Future<List<BatchModel>>
-      getBatches() async {
-    final response =
-        await supabase
-            .from('batches')
-            .select()
-            .order(
-              'created_at',
-              ascending: false,
-            );
+  Future<List<BatchModel>> getBatches() async {
+    final response = await supabase
+        .from('batches')
+        .select()
+        .order('created_at', ascending: false);
 
-    return response
-        .map<BatchModel>(
-          (batch) =>
-              BatchModel.fromMap(
-                batch,
-              ),
-        )
-        .toList();
+    return response.map<BatchModel>((batch) => BatchModel.fromMap(batch)).toList();
   }
 
   @override
-  Future<BatchModel> getBatchById(
-    String batchId,
-  ) async {
-    final response =
-        await supabase
-            .from('batches')
-            .select()
-            .eq(
-              'id',
-              batchId,
-            )
-            .single();
+  Future<BatchModel> getBatchById(String batchId) async {
+    final response = await supabase
+        .from('batches')
+        .select()
+        .eq('id', batchId)
+        .maybeSingle();
 
-    return BatchModel.fromMap(
-      response,
-    );
+    if (response == null) {
+      throw Exception('Batch not found.');
+    }
+
+    return BatchModel.fromMap(response);
   }
 
   @override
-  Future<List<Map<String, dynamic>>>
-      getStudents() async {
-    final response =
-        await supabase
-            .from('profiles')
-            .select()
-            .eq(
-              'role',
-              'student',
-            )
-            .order(
-              'email',
-            );
+  Future<List<Map<String, dynamic>>> getStudents() async {
+    final response = await supabase
+        .from('profiles')
+        .select()
+        .eq('role', 'student')
+        .order('email');
 
-    return List<Map<String, dynamic>>
-        .from(response);
+    return List<Map<String, dynamic>>.from(response);
   }
 
+  @override
+  Future<int> getStudentCount(String batchId) async {
+    final response = await supabase
+        .from('batch_students')
+        .select('student_id')
+        .eq('batch_id', batchId);
 
-@override
-Future<int> getStudentCount(
-  String batchId,
-) async {
-  final response =
-      await supabase
-          .from('batch_students')
-          .select()
-          .eq(
-            'batch_id',
-            batchId,
-          );
+    return response.length;
+  }
 
-  return response.length;
-}
+  @override
+  Future<List<String>> getEnrolledStudentIds(String batchId) async {
+    final response = await supabase
+        .from('batch_students')
+        .select('student_id')
+        .eq('batch_id', batchId);
 
-@override
-Future<List<String>>
-    getEnrolledStudentIds(
-  String batchId,
-) async {
-  final response =
-      await supabase
-          .from(
-            'batch_students',
-          )
-          .select(
-            'student_id',
-          )
-          .eq(
-            'batch_id',
-            batchId,
-          );
-
-  return response
-      .map<String>(
-        (
-          row,
-        ) =>
-            row[
-                'student_id']
-            as String,
-      )
-      .toList();
-}
+    return response.map<String>((row) => row['student_id'] as String).toList();
+  }
 
   @override
   Future<void> createBatch({
@@ -125,162 +71,101 @@ Future<List<String>>
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    await supabase
-        .from('batches')
-        .insert({
-          'name': name,
-          'description':
-              description,
-          'start_date':
-              startDate
-                  ?.toIso8601String(),
-          'end_date':
-              endDate
-                  ?.toIso8601String(),
-        });
+    await supabase.from('batches').insert({
+      'name': name.trim(),
+      'description': description?.trim(),
+      'start_date': startDate?.toIso8601String(),
+      'end_date': endDate?.toIso8601String(),
+    });
   }
 
   @override
-Future<void> addStudentToBatch({
-  required String batchId,
-  required String studentId,
-}) async {
-  await supabase
-      .from('batch_students')
-      .insert({
-        'batch_id': batchId,
-        'student_id': studentId,
-      });
-}
+  Future<void> addStudentToBatch({
+    required String batchId,
+    required String studentId,
+  }) async {
+    await supabase.from('batch_students').upsert({
+      'batch_id': batchId,
+      'student_id': studentId,
+    }, onConflict: 'batch_id,student_id');
+  }
 
-@override
-Future<void> removeStudentFromBatch({
-  required String batchId,
-  required String studentId,
-}) async {
-  await supabase
-      .from('batch_students')
-      .delete()
-      .eq('batch_id', batchId)
-      .eq('student_id', studentId);
-}
+  @override
+  Future<void> removeStudentFromBatch({
+    required String batchId,
+    required String studentId,
+  }) async {
+    await supabase
+        .from('batch_students')
+        .delete()
+        .eq('batch_id', batchId)
+        .eq('student_id', studentId);
+  }
 
-@override
-Future<List<Map<String, dynamic>>>
-    getBatchStudents(
-  String batchId,
-) async {
-  final response =
-      await supabase
-          .from('batch_students')
-          .select(
-            '''
-            student_id,
-            profiles(
-              id,
-              full_name,
-              email
-            )
-            ''',
+  @override
+  Future<List<Map<String, dynamic>>> getBatchStudents(String batchId) async {
+    final response = await supabase
+        .from('batch_students')
+        .select('''
+          student_id,
+          profiles(
+            id,
+            full_name,
+            email
           )
-          .eq(
-            'batch_id',
-            batchId,
-          );
+        ''')
+        .eq('batch_id', batchId);
 
-  return List<Map<String, dynamic>>.from(
-    response,
-  );
-}
-@override
-Future<List<Map<String, dynamic>>>
-    getBatchSubjects(
-  String batchId,
-) async {
-  final response =
-      await supabase
-          .from(
-            'batch_subjects',
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getBatchSubjects(String batchId) async {
+    final response = await supabase
+        .from('batch_subjects')
+        .select('''
+          subject_id,
+          subjects(
+            id,
+            name,
+            description
           )
-          .select(
-            '''
-            subject_id,
-            subjects(
-              id,
-              name,
-              description
-            )
-            ''',
-          )
-          .eq(
-            'batch_id',
-            batchId,
-          );
+        ''')
+        .eq('batch_id', batchId);
 
-  return List<Map<String, dynamic>>.from(
-    response,
-  );
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  @override
+  Future<List<String>> getAssignedSubjectIds(String batchId) async {
+    final response = await supabase
+        .from('batch_subjects')
+        .select('subject_id')
+        .eq('batch_id', batchId);
+
+    return response.map<String>((row) => row['subject_id'] as String).toList();
+  }
+
+  @override
+  Future<void> assignSubjectToBatch({
+    required String batchId,
+    required String subjectId,
+  }) async {
+    await supabase.from('batch_subjects').upsert({
+      'batch_id': batchId,
+      'subject_id': subjectId,
+    }, onConflict: 'batch_id,subject_id');
+  }
+
+  @override
+  Future<void> removeSubjectFromBatch({
+    required String batchId,
+    required String subjectId,
+  }) async {
+    await supabase
+        .from('batch_subjects')
+        .delete()
+        .eq('batch_id', batchId)
+        .eq('subject_id', subjectId);
+  }
 }
-
-@override
-Future<List<String>>
-    getAssignedSubjectIds(
-  String batchId,
-) async {
-  final response =
-      await supabase
-          .from(
-            'batch_subjects',
-          )
-          .select(
-            'subject_id',
-          )
-          .eq(
-            'batch_id',
-            batchId,
-          );
-
-  return response
-      .map<String>(
-        (row) =>
-            row['subject_id']
-                as String,
-      )
-      .toList();
-}
-
-@override
-Future<void>
-    assignSubjectToBatch({
-  required String batchId,
-  required String subjectId,
-}) async {
-  await supabase
-      .from(
-        'batch_subjects',
-      )
-      .insert({
-    'batch_id': batchId,
-    'subject_id': subjectId,
-  });
-}
-
-@override
-Future<void> removeSubjectFromBatch({
-  required String batchId,
-  required String subjectId,
-}) async {
-  await supabase
-      .from('batch_subjects')
-      .delete()
-      .eq(
-        'batch_id',
-        batchId,
-      )
-      .eq(
-        'subject_id',
-        subjectId,
-      );
-}
-}
-
