@@ -40,9 +40,9 @@ class AppTheme {
         elevation: 0,
         color: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        margin: EdgeInsets.zero,
+        margin: const EdgeInsets.all(4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -67,7 +67,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(120, 52),
+          minimumSize: const Size(120, 50),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
@@ -76,7 +76,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(120, 52),
+          minimumSize: const Size(120, 50),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
@@ -116,8 +116,9 @@ class AppTheme {
         ),
         titleLarge: baseTextTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         titleMedium: baseTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: AppColors.textMuted, height: 1.45),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: AppColors.textMuted, height: 1.45),
+        bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: AppColors.text, height: 1.45),
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: AppColors.text, height: 1.45),
+        bodySmall: baseTextTheme.bodySmall?.copyWith(color: AppColors.textMuted, height: 1.35),
       ),
     );
   }
