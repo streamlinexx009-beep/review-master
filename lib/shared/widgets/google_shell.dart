@@ -18,13 +18,13 @@ class GoogleShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width > 980;
+    final showSidebar = MediaQuery.of(context).size.width > 980;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Row(
         children: [
-          if (isDesktop)
+          if (showSidebar)
             _SideBar(
               selectedIndex: selectedIndex,
               onDestinationSelected: onDestinationSelected,
@@ -39,14 +39,9 @@ class GoogleShell extends StatelessWidget {
               children: [
                 const GoogleTopBar(),
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(28),
-                    ),
-                    child: ColoredBox(
-                      color: AppColors.background,
-                      child: child,
-                    ),
+                  child: ColoredBox(
+                    color: AppColors.background,
+                    child: child,
                   ),
                 ),
               ],
@@ -57,6 +52,48 @@ class GoogleShell extends StatelessWidget {
     );
   }
 }
+
+class _NavItem {
+  final int index;
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  const _NavItem(this.index, this.icon, this.selectedIcon, this.label);
+}
+
+const _myDeskItems = [
+  _NavItem(0, Icons.dashboard_outlined, Icons.dashboard_rounded, 'Dashboard'),
+  _NavItem(7, Icons.calendar_month_outlined, Icons.calendar_month_rounded, 'Study Planner'),
+];
+
+const _learningItems = [
+  _NavItem(1, Icons.menu_book_outlined, Icons.menu_book_rounded, 'Subjects'),
+  _NavItem(2, Icons.description_outlined, Icons.description_rounded, 'Materials'),
+  _NavItem(3, Icons.style_outlined, Icons.style_rounded, 'Flashcards'),
+  _NavItem(4, Icons.quiz_outlined, Icons.quiz_rounded, 'Exams'),
+];
+
+const _insightItems = [
+  _NavItem(5, Icons.assessment_outlined, Icons.assessment_rounded, 'Results'),
+  _NavItem(6, Icons.analytics_outlined, Icons.analytics_rounded, 'Analytics'),
+];
+
+const _managementItems = [
+  _NavItem(8, Icons.groups_outlined, Icons.groups_rounded, 'Batches'),
+];
+
+const _allItems = [
+  _NavItem(0, Icons.dashboard_outlined, Icons.dashboard_rounded, 'Dashboard'),
+  _NavItem(1, Icons.menu_book_outlined, Icons.menu_book_rounded, 'Subjects'),
+  _NavItem(2, Icons.description_outlined, Icons.description_rounded, 'Materials'),
+  _NavItem(3, Icons.style_outlined, Icons.style_rounded, 'Flashcards'),
+  _NavItem(4, Icons.quiz_outlined, Icons.quiz_rounded, 'Exams'),
+  _NavItem(5, Icons.assessment_outlined, Icons.assessment_rounded, 'Results'),
+  _NavItem(6, Icons.analytics_outlined, Icons.analytics_rounded, 'Analytics'),
+  _NavItem(7, Icons.calendar_month_outlined, Icons.calendar_month_rounded, 'Study Planner'),
+  _NavItem(8, Icons.groups_outlined, Icons.groups_rounded, 'Batches'),
+];
 
 class _SideBar extends StatelessWidget {
   final int selectedIndex;
@@ -71,117 +108,148 @@ class _SideBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 300,
-      padding: const EdgeInsets.fromLTRB(22, 28, 18, 24),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(right: BorderSide(color: AppColors.border)),
       ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 24, 20, 18),
+              child: _BrandMark(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _NavSection(
+                      title: 'MY DESK',
+                      items: _myDeskItems,
+                      selectedIndex: selectedIndex,
+                      onTap: onDestinationSelected,
+                    ),
+                    _NavSection(
+                      title: 'LEARNING',
+                      items: _learningItems,
+                      selectedIndex: selectedIndex,
+                      onTap: onDestinationSelected,
+                    ),
+                    _NavSection(
+                      title: 'INSIGHTS',
+                      items: _insightItems,
+                      selectedIndex: selectedIndex,
+                      onTap: onDestinationSelected,
+                    ),
+                    _NavSection(
+                      title: 'MANAGEMENT',
+                      items: _managementItems,
+                      selectedIndex: selectedIndex,
+                      onTap: onDestinationSelected,
+                    ),
+                    const SizedBox(height: 16),
+                    const _SidebarNote(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavSection extends StatelessWidget {
+  final String title;
+  final List<_NavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  const _NavSection({
+    required this.title,
+    required this.items,
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _BrandMark(),
-          const SizedBox(height: 42),
-          const _SectionLabel('MY DESK'),
-          _NavTile(
-            index: 0,
-            selectedIndex: selectedIndex,
-            icon: Icons.dashboard_outlined,
-            selectedIcon: Icons.dashboard_rounded,
-            label: 'Dashboard',
-            onTap: onDestinationSelected,
-          ),
-          _NavTile(
-            index: 7,
-            selectedIndex: selectedIndex,
-            icon: Icons.calendar_month_outlined,
-            selectedIcon: Icons.calendar_month_rounded,
-            label: 'My schedule',
-            onTap: onDestinationSelected,
-          ),
-          const SizedBox(height: 24),
-          const _SectionLabel('MENU'),
-          _NavTile(
-            index: 1,
-            selectedIndex: selectedIndex,
-            icon: Icons.menu_book_outlined,
-            selectedIcon: Icons.menu_book_rounded,
-            label: 'Classroom',
-            onTap: onDestinationSelected,
-          ),
-          _NavTile(
-            index: 8,
-            selectedIndex: selectedIndex,
-            icon: Icons.groups_outlined,
-            selectedIcon: Icons.groups_rounded,
-            label: 'Independent class',
-            onTap: onDestinationSelected,
-          ),
-          _NavTile(
-            index: 3,
-            selectedIndex: selectedIndex,
-            icon: Icons.style_outlined,
-            selectedIcon: Icons.style_rounded,
-            label: 'Flashcards',
-            onTap: onDestinationSelected,
-          ),
-          _NavTile(
-            index: 4,
-            selectedIndex: selectedIndex,
-            icon: Icons.quiz_outlined,
-            selectedIcon: Icons.quiz_rounded,
-            label: 'Exams',
-            onTap: onDestinationSelected,
-          ),
-          _NavTile(
-            index: 5,
-            selectedIndex: selectedIndex,
-            icon: Icons.insert_chart_outlined_rounded,
-            selectedIcon: Icons.insert_chart_rounded,
-            label: 'Report',
-            onTap: onDestinationSelected,
-          ),
-          _NavTile(
-            index: 2,
-            selectedIndex: selectedIndex,
-            icon: Icons.description_outlined,
-            selectedIcon: Icons.description_rounded,
-            label: 'Materials',
-            onTap: onDestinationSelected,
-          ),
-          const Spacer(),
-          const _SectionLabel('SETTINGS'),
-          _NavTile(
-            index: 6,
-            selectedIndex: selectedIndex,
-            icon: Icons.tune_outlined,
-            selectedIcon: Icons.tune_rounded,
-            label: 'Analytics',
-            onTap: onDestinationSelected,
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.primaryDark,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.school_rounded, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Keep learning every day',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+          Padding(
+            padding: const EdgeInsets.only(left: 14, bottom: 8),
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
                   ),
-                ),
-              ],
             ),
           ),
+          for (final item in items)
+            _NavTile(
+              item: item,
+              selectedIndex: selectedIndex,
+              onTap: onTap,
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  final _NavItem item;
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  const _NavTile({
+    required this.item,
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = item.index == selectedIndex;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => onTap(item.index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.mutedSurface : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Icon(selected ? item.selectedIcon : item.icon),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                        color: AppColors.text,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -207,17 +275,42 @@ class _CompactRail extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 18),
         child: _LogoGlyph(),
       ),
-      destinations: const [
-        NavigationRailDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard_rounded), label: Text('Dashboard')),
-        NavigationRailDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book_rounded), label: Text('Subjects')),
-        NavigationRailDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description_rounded), label: Text('Materials')),
-        NavigationRailDestination(icon: Icon(Icons.style_outlined), selectedIcon: Icon(Icons.style_rounded), label: Text('Flashcards')),
-        NavigationRailDestination(icon: Icon(Icons.quiz_outlined), selectedIcon: Icon(Icons.quiz_rounded), label: Text('Exams')),
-        NavigationRailDestination(icon: Icon(Icons.insert_chart_outlined_rounded), selectedIcon: Icon(Icons.insert_chart_rounded), label: Text('Results')),
-        NavigationRailDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics_rounded), label: Text('Analytics')),
-        NavigationRailDestination(icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month_rounded), label: Text('Planner')),
-        NavigationRailDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups_rounded), label: Text('Batches')),
+      destinations: [
+        for (final item in _allItems)
+          NavigationRailDestination(
+            icon: Icon(item.icon),
+            selectedIcon: Icon(item.selectedIcon),
+            label: Text(item.label),
+          ),
       ],
+    );
+  }
+}
+
+class _SidebarNote extends StatelessWidget {
+  const _SidebarNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryDark,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.school_rounded, color: Colors.white),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Keep learning every day',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -231,12 +324,16 @@ class _BrandMark extends StatelessWidget {
       children: [
         const _LogoGlyph(),
         const SizedBox(width: 14),
-        Text(
-          'ReviewHub',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppColors.text,
-                fontWeight: FontWeight.w900,
-              ),
+        Expanded(
+          child: Text(
+            'ReviewHub',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.text,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
         ),
       ],
     );
@@ -252,7 +349,7 @@ class _LogoGlyph extends StatelessWidget {
       width: 42,
       height: 42,
       child: Stack(
-        children: [
+        children: const [
           _LogoBlock(left: 0, top: 0, color: AppColors.primary),
           _LogoBlock(left: 17, top: 0, color: AppColors.secondary),
           _LogoBlock(left: 0, top: 17, color: AppColors.primaryDark),
@@ -291,87 +388,11 @@ class _LogoBlock extends StatelessWidget {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  final String label;
-
-  const _SectionLabel(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 14, bottom: 8),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.3,
-            ),
-      ),
-    );
-  }
-}
-
-class _NavTile extends StatelessWidget {
-  final int index;
-  final int selectedIndex;
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-  final ValueChanged<int> onTap;
-
-  const _NavTile({
-    required this.index,
-    required this.selectedIndex,
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = index == selectedIndex;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => onTap(index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.mutedSurface : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                selected ? selectedIcon : icon,
-                color: selected ? AppColors.text : AppColors.text,
-              ),
-              const SizedBox(width: 14),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                      color: AppColors.text,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class GoogleTopBar extends StatelessWidget {
   const GoogleTopBar({super.key});
 
   Future<void> _handleMenuAction(BuildContext context, String value) async {
-    if (value != 'logout') return;
+    if (value != 'signout') return;
 
     await AuthService.signOut();
 
@@ -382,57 +403,67 @@ class GoogleTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 88,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      color: AppColors.background,
-      child: Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 50,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search classes, exams, reports...',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 720;
+
+        return Container(
+          height: 88,
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          color: AppColors.background,
+          child: Row(
+            children: [
+              if (!compact)
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search classes, exams, reports...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: Container(
+                          margin: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySoft,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.tune_rounded, size: 18),
+                        ),
+                      ),
                     ),
-                    child: const Icon(Icons.tune_rounded, size: 18),
                   ),
+                )
+              else
+                const Spacer(),
+              const SizedBox(width: 16),
+              if (!compact)
+                _TopPill(
+                  icon: Icons.calendar_today_outlined,
+                  label: '01 Aug',
+                  onTap: () {},
+                ),
+              if (!compact) const SizedBox(width: 12),
+              IconButton.filledTonal(
+                onPressed: () {},
+                icon: const Icon(Icons.notifications_none_rounded),
+              ),
+              const SizedBox(width: 10),
+              PopupMenuButton<String>(
+                onSelected: (value) => _handleMenuAction(context, value),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'profile', child: Text('Profile')),
+                  PopupMenuItem(value: 'signout', child: Text('Sign out')),
+                ],
+                child: const CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.primaryDark,
+                  child: Icon(Icons.person_rounded, color: Colors.white),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          _TopPill(
-            icon: Icons.calendar_today_outlined,
-            label: '01 Aug',
-            onTap: () {},
-          ),
-          const SizedBox(width: 12),
-          IconButton.filledTonal(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
-          const SizedBox(width: 10),
-          PopupMenuButton<String>(
-            onSelected: (value) => _handleMenuAction(context, value),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'profile', child: Text('Profile')),
-              PopupMenuItem(value: 'logout', child: Text('Logout')),
             ],
-            child: const CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.primaryDark,
-              child: Icon(Icons.person_rounded, color: Colors.white),
-            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -442,11 +473,7 @@ class _TopPill extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _TopPill({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _TopPill({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
