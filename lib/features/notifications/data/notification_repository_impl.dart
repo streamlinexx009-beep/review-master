@@ -3,72 +3,51 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notification_model.dart';
 import 'notification_repository.dart';
 
-class NotificationRepositoryImpl
-    implements NotificationRepository {
-
+class NotificationRepositoryImpl implements NotificationRepository {
   final SupabaseClient client;
 
-  NotificationRepositoryImpl(
-    this.client,
-  );
+  NotificationRepositoryImpl(this.client);
 
-  @override
-  Future<List<NotificationModel>>
-      getNotifications() async {
+  User _requireUser() {
+    final user = client.auth.currentUser;
 
-    final user =
-        client.auth.currentUser!;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
 
-    final data =
-        await client
-            .from('notifications')
-            .select()
-            .eq(
-              'user_id',
-              user.id,
-            )
-            .order(
-              'created_at',
-              ascending: false,
-            );
-
-    return data
-        .map<NotificationModel>(
-          (e) =>
-              NotificationModel.fromMap(e),
-        )
-        .toList();
+    return user;
   }
 
   @override
-  Future<void> markAsRead(
-    String notificationId,
-  ) async {
+  Future<List<NotificationModel>> getNotifications() async {
+    final user = _requireUser();
 
-    await client
+    final data = await client
         .from('notifications')
-        .update({
-      'is_read': true,
-    }).eq(
-      'id',
-      notificationId,
-    );
+        .select()
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false);
+
+    return data.map<NotificationModel>((e) => NotificationModel.fromMap(e)).toList();
   }
 
   @override
-  Future<void> markAllAsRead()
-      async {
-
-    final user =
-        client.auth.currentUser!;
+  Future<void> markAsRead(String notificationId) async {
+    _requireUser();
 
     await client
         .from('notifications')
-        .update({
-      'is_read': true,
-    }).eq(
-      'user_id',
-      user.id,
-    );
+        .update({'is_read': true})
+        .eq('id', notificationId);
+  }
+
+  @override
+  Future<void> markAllAsRead() async {
+    final user = _requireUser();
+
+    await client
+        .from('notifications')
+        .update({'is_read': true})
+        .eq('user_id', user.id);
   }
 }
