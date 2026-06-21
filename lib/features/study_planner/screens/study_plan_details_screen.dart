@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/study_plan_model.dart';
-import '../models/study_task_model.dart';
-import '../providers/study_planner_provider.dart';
+import '../services/study_plan_service.dart';
 
-class StudyPlanDetailsScreen extends ConsumerStatefulWidget {
+class StudyPlanDetailsScreen extends StatefulWidget {
   final StudyPlanModel plan;
 
   const StudyPlanDetailsScreen({
@@ -14,217 +13,112 @@ class StudyPlanDetailsScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<StudyPlanDetailsScreen>
-      createState() =>
-          _StudyPlanDetailsScreenState();
+  State<StudyPlanDetailsScreen> createState() => _StudyPlanDetailsScreenState();
 }
 
-class _StudyPlanDetailsScreenState
-    extends ConsumerState<StudyPlanDetailsScreen> {
-  late Future<List<StudyTaskModel>>
-      _tasksFuture;
+class _StudyPlanDetailsScreenState extends State<StudyPlanDetailsScreen> {
+  final _service = StudyPlanService();
+  bool _loading = true;
+  List<Map<String, dynamic>> _tasks = [];
 
   @override
   void initState() {
     super.initState();
-
-    _tasksFuture = ref
-        .read(
-          studyPlannerRepositoryProvider,
-        )
-        .getTasks(
-          widget.plan.id,
-        );
+    _loadTasks();
   }
 
-  Future<void> _reloadTasks() async {
+  Future<void> _loadTasks() async {
+    final tasks = await _service.getTasks(widget.plan.id);
+
+    if (!mounted) return;
+
     setState(() {
-      _tasksFuture = ref
-          .read(
-            studyPlannerRepositoryProvider,
-          )
-          .getTasks(
-            widget.plan.id,
-          );
+      _tasks = tasks;
+      _loading = false;
     });
   }
 
+  Future<void> _toggleTask(Map<String, dynamic> task) async {
+    await _service.updateTaskStatus(
+      task['id'],
+      !(task['is_completed'] as bool),
+    );
+
+    await _loadTasks();
+  }
+
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.plan.title,
+        title: Text(widget.plan.title),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
         ),
       ),
-      body: FutureBuilder<
-          List<StudyTaskModel>>(
-        future: _tasksFuture,
-        builder: (
-          context,
-          snapshot,
-        ) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child:
-                  CircularProgressIndicator(),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                snapshot.error.toString(),
-              ),
-            );
-          }
-
-          final tasks =
-              snapshot.data ?? [];
-
-          if (tasks.isEmpty) {
-            return const Center(
-              child: Text(
-                'No tasks found.',
-              ),
-            );
-          }
-
-          final completed =
-              tasks
-                  .where(
-                    (t) =>
-                        t.isCompleted,
-                  )
-                  .length;
-
-          final progress =
-              completed /
-              tasks.length;
-
-          return Column(
-            children: [
-              Container(
-                width:
-                    double.infinity,
-                padding:
-                    const EdgeInsets.all(
-                  16,
-                ),
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                  children: [
-                    Text(
-                      widget
-                              .plan
-                              .description ??
-                          '',
-                      style:
-                          TextStyle(
-                        color: Colors
-                            .grey
-                            .shade700,
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.plan.description,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          LinearProgressIndicator(
+                            value: widget.plan.progress / 100,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${widget.plan.completedTasks}/${widget.plan.totalTasks} tasks completed',
+                          ),
+                        ],
                       ),
                     ),
-
-                    const SizedBox(
-                      height: 16,
-                    ),
-
-                    Text(
-                      'Progress: ${(progress * 100).toStringAsFixed(0)}%',
-                      style:
-                          const TextStyle(
-                        fontWeight:
-                            FontWeight
-                                .bold,
-                        fontSize: 16,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 8,
-                    ),
-
-                    LinearProgressIndicator(
-                      value:
-                          progress,
-                      minHeight: 10,
-                    ),
-                  ],
-                ),
-              ),
-
-              const Divider(),
-
-              Expanded(
-                child:
-                    ListView.builder(
-                  padding:
-                      const EdgeInsets
-                          .all(
-                    16,
                   ),
-                  itemCount:
-                      tasks.length,
-                  itemBuilder:
-                      (
-                        context,
-                        index,
-                      ) {
-                    final task =
-                        tasks[index];
+                  const SizedBox(height: 24),
+                  Text(
+                    'Tasks',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: _tasks.isEmpty
+                        ? const Center(child: Text('No tasks found.'))
+                        : ListView.separated(
+                            itemCount: _tasks.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final task = _tasks[index];
+                              final isCompleted = task['is_completed'] as bool? ?? false;
 
-                    return Card(
-                      margin:
-                          const EdgeInsets.only(
-                        bottom:
-                            12,
-                      ),
-                      child:
-                          CheckboxListTile(
-                        value: task
-                            .isCompleted,
-                        title: Text(
-                          task.title,
-                        ),
-                        subtitle:
-                            Text(
-                          task.description,
-                        ),
-                        controlAffinity:
-                            ListTileControlAffinity
-                                .leading,
-                        onChanged:
-                            (
-                              value,
-                            ) async {
-                          await ref
-                              .read(
-                                studyPlannerRepositoryProvider,
-                              )
-                              .toggleTask(
-                                task.id,
-                                value ??
-                                    false,
+                              return Card(
+                                child: CheckboxListTile(
+                                  value: isCompleted,
+                                  onChanged: (_) => _toggleTask(task),
+                                  title: Text(task['title']?.toString() ?? ''),
+                                  subtitle: Text(task['description']?.toString() ?? ''),
+                                ),
                               );
-
-                          await _reloadTasks();
-                        },
-                      ),
-                    );
-                  },
-                ),
+                            },
+                          ),
+                  ),
+                ],
               ),
-            ],
-          );
-        },
-      ),
+            ),
     );
   }
 }
