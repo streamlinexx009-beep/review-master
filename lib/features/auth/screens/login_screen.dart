@@ -13,11 +13,11 @@ class LoginScreen extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(28),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1320),
               child: Container(
-                padding: const EdgeInsets.fromLTRB(44, 32, 44, 44),
+                padding: const EdgeInsets.fromLTRB(40, 28, 40, 40),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(30),
@@ -32,7 +32,7 @@ class LoginScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const _LandingNav(),
-                    const SizedBox(height: 56),
+                    const SizedBox(height: 42),
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final wide = constraints.maxWidth > 920;
@@ -40,7 +40,7 @@ class LoginScreen extends StatelessWidget {
                           return const Column(
                             children: [
                               _HeroContent(),
-                              SizedBox(height: 34),
+                              SizedBox(height: 28),
                               _SignInPanel(),
                             ],
                           );
@@ -55,7 +55,7 @@ class LoginScreen extends StatelessWidget {
                         );
                       },
                     ),
-                    const SizedBox(height: 46),
+                    const SizedBox(height: 38),
                     const _LearningIllustration(),
                   ],
                 ),
@@ -85,7 +85,7 @@ class _LandingNav extends StatelessWidget {
               ),
         ),
         const Spacer(),
-        if (MediaQuery.of(context).size.width > 820) ...const [
+        if (MediaQuery.of(context).size.width > 860) ...const [
           _NavText('Product'),
           _NavText('Solutions'),
           _NavText('Pricing'),
@@ -118,6 +118,7 @@ class _LandingNav extends StatelessWidget {
 
 class _NavText extends StatelessWidget {
   final String text;
+
   const _NavText(this.text);
 
   @override
@@ -162,7 +163,7 @@ class _HeroContent extends StatelessWidget {
                 color: AppColors.text,
               ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 20),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: Text(
@@ -171,11 +172,11 @@ class _HeroContent extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 26),
         FilledButton(
           onPressed: () {},
           style: FilledButton.styleFrom(
-            minimumSize: const Size(220, 58),
+            minimumSize: const Size(220, 56),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           ),
           child: const Text('Get Started'),
@@ -224,14 +225,15 @@ class _LearningIllustration extends StatelessWidget {
           return const Column(
             children: [
               _BrowserMockup(),
-              SizedBox(height: 20),
+              SizedBox(height: 18),
               _LessonListMockup(),
-              SizedBox(height: 20),
+              SizedBox(height: 18),
               _FamilyCardMockup(),
             ],
           );
         }
         return const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(flex: 6, child: _BrowserMockup()),
             SizedBox(width: 20),
@@ -251,13 +253,14 @@ class _BrowserMockup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 280,
+      height: 245,
       decoration: BoxDecoration(
         color: const Color(0xFFE8F7D9),
         borderRadius: BorderRadius.circular(28),
       ),
-      padding: const EdgeInsets.fromLTRB(56, 48, 0, 0),
+      padding: const EdgeInsets.fromLTRB(50, 42, 0, 0),
       child: Container(
+        clipBehavior: Clip.antiAlias,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(22)),
@@ -265,17 +268,14 @@ class _BrowserMockup extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              height: 42,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(22)),
-              ),
+              height: 40,
+              color: AppColors.primary,
               child: Center(
                 child: Container(
-                  width: 260,
+                  width: 240,
                   height: 9,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.45),
+                    color: Colors.white.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -283,7 +283,7 @@ class _BrowserMockup extends StatelessWidget {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(22),
                 child: Column(
                   children: [
                     Row(
@@ -294,7 +294,7 @@ class _BrowserMockup extends StatelessWidget {
                     ...List.generate(
                       3,
                       (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: 10),
                         child: Row(
                           children: [
                             Container(width: 70, height: 10, decoration: _barDecoration()),
@@ -321,26 +321,25 @@ class _LessonListMockup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 280,
-      padding: const EdgeInsets.all(28),
+      height: 245,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: const Color(0xFFF6DFF2),
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
         children: List.generate(
-          6,
-          (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 17),
+          5,
+          (index) => Expanded(
             child: Row(
               children: [
                 _MiniAvatar(index: index),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Container(
-                    height: 16,
+                    height: 15,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.54),
+                      color: Colors.white.withValues(alpha: 0.54),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -360,7 +359,7 @@ class _FamilyCardMockup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 280,
+      height: 245,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: const Color(0xFFFFE4C7),
@@ -384,7 +383,7 @@ class _FamilyCardMockup extends StatelessWidget {
               Expanded(child: Container(height: 18, decoration: _barDecoration(color: const Color(0xFFE9B883)))),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -392,7 +391,7 @@ class _FamilyCardMockup extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22),
               ),
               child: const Center(
-                child: Icon(Icons.auto_stories_rounded, size: 76, color: AppColors.primary),
+                child: Icon(Icons.auto_stories_rounded, size: 70, color: AppColors.primary),
               ),
             ),
           ),
