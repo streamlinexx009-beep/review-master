@@ -1,8 +1,5 @@
-
-
 class AppTypography {
   AppTypography._();
 
-  static const fontFamily =
-      'Roboto';
+  static const fontFamily = 'Inter';
 }
