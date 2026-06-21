@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/services/auth_service.dart';
 
 class GoogleShell extends StatelessWidget {
   final Widget child;
@@ -14,9 +17,7 @@ class GoogleShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop =
-        MediaQuery.of(context).size.width >
-            1000;
+    final isDesktop = MediaQuery.of(context).size.width > 1000;
 
     return Scaffold(
       body: Row(
@@ -24,139 +25,68 @@ class GoogleShell extends StatelessWidget {
           NavigationRail(
             extended: isDesktop,
             selectedIndex: selectedIndex,
-            onDestinationSelected:
-                onDestinationSelected,
-
+            onDestinationSelected: onDestinationSelected,
             leading: const Padding(
-              padding:
-                  EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: CircleAvatar(
                 radius: 24,
-                child: Icon(
-                  Icons.school,
-                ),
+                child: Icon(Icons.school),
               ),
             ),
-
             destinations: const [
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.dashboard_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.dashboard),
-                label: Text(
-                  'Dashboard',
-                ),
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard),
+                label: Text('Dashboard'),
               ),
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.book_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.book),
-                label: Text(
-                  'Subjects',
-                ),
+                icon: Icon(Icons.book_outlined),
+                selectedIcon: Icon(Icons.book),
+                label: Text('Subjects'),
               ),
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.description_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.description,
-                ),
-                label: Text(
-                  'Materials',
-                ),
+                icon: Icon(Icons.description_outlined),
+                selectedIcon: Icon(Icons.description),
+                label: Text('Materials'),
               ),
-
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.style_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.style),
-                label: Text(
-                  'Flashcards',
-                ),
+                icon: Icon(Icons.style_outlined),
+                selectedIcon: Icon(Icons.style),
+                label: Text('Flashcards'),
               ),
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.quiz_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.quiz),
-                label: Text(
-                  'Exams',
-                ),
+                icon: Icon(Icons.quiz_outlined),
+                selectedIcon: Icon(Icons.quiz),
+                label: Text('Exams'),
               ),
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.assessment_outlined,
-                ),
-                selectedIcon: Icon(
-                  Icons.assessment,
-                ),
-                label: Text(
-                  'Results',
-                ),
+                icon: Icon(Icons.assessment_outlined),
+                selectedIcon: Icon(Icons.assessment),
+                label: Text('Results'),
               ),
-
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.analytics_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.analytics),
-                label: Text(
-                  'Analytics',
-                ),
+                icon: Icon(Icons.analytics_outlined),
+                selectedIcon: Icon(Icons.analytics),
+                label: Text('Analytics'),
               ),
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.event_note_outlined,
-                ),
-                selectedIcon:
-                    Icon(Icons.event_note),
-                label: Text(
-                  'Study Planner',
-                ),
+                icon: Icon(Icons.event_note_outlined),
+                selectedIcon: Icon(Icons.event_note),
+                label: Text('Study Planner'),
               ),
-
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.groups_outlined,
-                ),
-                selectedIcon: Icon(
-                  Icons.groups,
-                ),
-                label: Text(
-                  'Batches',
-                ),
+                icon: Icon(Icons.groups_outlined),
+                selectedIcon: Icon(Icons.groups),
+                label: Text('Batches'),
               ),
             ],
           ),
-
-          const VerticalDivider(
-            width: 1,
-          ),
-
+          const VerticalDivider(width: 1),
           Expanded(
             child: Column(
               children: [
                 const GoogleTopBar(),
-
-                Expanded(
-                  child: child,
-                ),
+                Expanded(child: child),
               ],
             ),
           ),
@@ -167,97 +97,62 @@ class GoogleShell extends StatelessWidget {
 }
 
 class GoogleTopBar extends StatelessWidget {
-  const GoogleTopBar({
-    super.key,
-  });
+  const GoogleTopBar({super.key});
+
+  Future<void> _handleMenuAction(BuildContext context, String value) async {
+    if (value != 'logout') return;
+
+    await AuthService.signOut();
+
+    if (context.mounted) {
+      context.go('/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 72,
-
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 24,
-      ),
-
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color:
-            Theme.of(context)
-                .colorScheme
-                .surface,
-
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(
-            color:
-                Colors.grey.shade300,
-          ),
+          bottom: BorderSide(color: Colors.grey.shade300),
         ),
       ),
-
       child: Row(
         children: [
           Expanded(
             child: SizedBox(
               height: 48,
               child: TextField(
-                decoration:
-                    InputDecoration(
-                  hintText:
-                      'Search materials, flashcards, exams...',
-
-                  prefixIcon:
-                      const Icon(
-                    Icons.search,
-                  ),
+                decoration: InputDecoration(
+                  hintText: 'Search materials, flashcards, exams...',
+                  prefixIcon: const Icon(Icons.search),
                 ),
               ),
             ),
           ),
-
-          const SizedBox(
-            width: 16,
-          ),
-
+          const SizedBox(width: 16),
           IconButton(
             onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_outlined,
-            ),
+            icon: const Icon(Icons.notifications_outlined),
           ),
-
-          const SizedBox(
-            width: 8,
-          ),
-
+          const SizedBox(width: 8),
           PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value ==
-                  'logout') {
-                // TODO:
-                // Connect AuthService.logout()
-              }
-            },
-            itemBuilder:
-                (context) => [
-              const PopupMenuItem(
+            onSelected: (value) => _handleMenuAction(context, value),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
                 value: 'profile',
-                child: Text(
-                  'Profile',
-                ),
+                child: Text('Profile'),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'logout',
-                child: Text(
-                  'Logout',
-                ),
+                child: Text('Logout'),
               ),
             ],
-            child:
-                const CircleAvatar(
-              child: Icon(
-                Icons.person,
-              ),
+            child: const CircleAvatar(
+              child: Icon(Icons.person),
             ),
           ),
         ],
