@@ -4,9 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../widgets/login_form.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({
-    super.key,
-  });
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,20 +36,21 @@ class LoginScreen extends StatelessWidget {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final wide = constraints.maxWidth > 920;
-
-                        return Flex(
-                          direction: wide ? Axis.horizontal : Axis.vertical,
+                        if (!wide) {
+                          return const Column(
+                            children: [
+                              _HeroContent(),
+                              SizedBox(height: 34),
+                              _SignInPanel(),
+                            ],
+                          );
+                        }
+                        return const Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Expanded(
-                              flex: wide ? 6 : 0,
-                              child: const _HeroContent(),
-                            ),
-                            SizedBox(width: wide ? 42 : 0, height: wide ? 0 : 34),
-                            Expanded(
-                              flex: wide ? 4 : 0,
-                              child: const _SignInPanel(),
-                            ),
+                            Expanded(flex: 6, child: _HeroContent()),
+                            SizedBox(width: 42),
+                            Expanded(flex: 4, child: _SignInPanel()),
                           ],
                         );
                       },
@@ -119,7 +118,6 @@ class _LandingNav extends StatelessWidget {
 
 class _NavText extends StatelessWidget {
   final String text;
-
   const _NavText(this.text);
 
   @override
@@ -151,7 +149,7 @@ class _HeroContent extends StatelessWidget {
               const TextSpan(text: 'Built for '),
               TextSpan(
                 text: 'Review Centers,\n',
-                style: TextStyle(color: AppColors.primary),
+                style: const TextStyle(color: AppColors.primary),
               ),
               const TextSpan(text: 'loved by learners'),
             ],
@@ -199,10 +197,7 @@ class _SignInPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Welcome back',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('Welcome back', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
               'Sign in to continue to your classroom dashboard.',
@@ -225,24 +220,24 @@ class _LearningIllustration extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 760;
-
-        return Flex(
-          direction: compact ? Axis.vertical : Axis.horizontal,
+        if (compact) {
+          return const Column(
+            children: [
+              _BrowserMockup(),
+              SizedBox(height: 20),
+              _LessonListMockup(),
+              SizedBox(height: 20),
+              _FamilyCardMockup(),
+            ],
+          );
+        }
+        return const Row(
           children: [
-            Expanded(
-              flex: compact ? 0 : 6,
-              child: const _BrowserMockup(),
-            ),
-            SizedBox(width: compact ? 0 : 20, height: compact ? 20 : 0),
-            Expanded(
-              flex: compact ? 0 : 3,
-              child: const _LessonListMockup(),
-            ),
-            SizedBox(width: compact ? 0 : 20, height: compact ? 20 : 0),
-            Expanded(
-              flex: compact ? 0 : 3,
-              child: const _FamilyCardMockup(),
-            ),
+            Expanded(flex: 6, child: _BrowserMockup()),
+            SizedBox(width: 20),
+            Expanded(flex: 3, child: _LessonListMockup()),
+            SizedBox(width: 20),
+            Expanded(flex: 3, child: _FamilyCardMockup()),
           ],
         );
       },
@@ -293,10 +288,7 @@ class _BrowserMockup extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(
-                        6,
-                        (index) => _MiniAvatar(index: index),
-                      ),
+                      children: List.generate(6, (index) => _MiniAvatar(index: index)),
                     ),
                     const Spacer(),
                     ...List.generate(
@@ -411,15 +403,11 @@ class _FamilyCardMockup extends StatelessWidget {
 }
 
 BoxDecoration _barDecoration({Color color = const Color(0xFFE8ECF1)}) {
-  return BoxDecoration(
-    color: color,
-    borderRadius: BorderRadius.circular(999),
-  );
+  return BoxDecoration(color: color, borderRadius: BorderRadius.circular(999));
 }
 
 class _MiniAvatar extends StatelessWidget {
   final int index;
-
   const _MiniAvatar({required this.index});
 
   @override
@@ -432,7 +420,6 @@ class _MiniAvatar extends StatelessWidget {
       Color(0xFF4BC0C8),
       Color(0xFFB8D8FF),
     ];
-
     return CircleAvatar(
       radius: 15,
       backgroundColor: colors[index % colors.length],
@@ -450,7 +437,7 @@ class _LogoGlyph extends StatelessWidget {
       width: 38,
       height: 38,
       child: Stack(
-        children: [
+        children: const [
           _LogoBlock(left: 0, top: 0, color: AppColors.primary),
           _LogoBlock(left: 16, top: 0, color: AppColors.secondary),
           _LogoBlock(left: 0, top: 16, color: AppColors.primaryDark),
