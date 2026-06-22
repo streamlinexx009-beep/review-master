@@ -11,50 +11,20 @@ class StudentDashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(32, 18, 32, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: const [
           _DashboardHeader(),
-          const SizedBox(height: 28),
-          const _MetricsGrid(),
-          const SizedBox(height: 34),
-          const _SectionHeader(
+          SizedBox(height: 28),
+          _MetricsGrid(),
+          SizedBox(height: 34),
+          _SectionHeader(
             title: 'Upcoming class',
             subtitle: 'Today, you have 3 upcoming class',
             action: 'More',
           ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 194,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: const [
-                _ClassCard(
-                  highlighted: true,
-                  title: 'Contextual understanding and design process flow',
-                  label: 'UI/UX FUNDAMENTAL',
-                  time: '14 Hours',
-                  buttonText: 'START THE CLASS',
-                ),
-                _ClassCard(
-                  title: 'Introduction to foundation of desk research and how to present',
-                  label: 'UI/UX FUNDAMENTAL',
-                  time: '20 Hours',
-                  buttonText: 'UPCOMING CLASS',
-                ),
-                _ClassCard(
-                  title: 'Basic illustration and adobe illustrator',
-                  label: 'UI/UX FUNDAMENTAL',
-                  time: '18 Hours',
-                  buttonText: 'UPCOMING CLASS',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 34),
-          Text('Classroom', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 18),
-          const _ClassroomFilters(),
-          const SizedBox(height: 18),
-          const _ClassroomTable(),
+          SizedBox(height: 18),
+          _UpcomingClassList(),
+          SizedBox(height: 34),
+          _ClassroomSection(),
         ],
       ),
     );
@@ -62,25 +32,27 @@ class StudentDashboardScreen extends StatelessWidget {
 }
 
 class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader();
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Hi, Review Master! 👋', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 8),
-              Text(
-                'Your average activity this week is 75%, it is very good enough.',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ],
-          ),
-        ),
-        Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 700;
+
+        final title = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Hi, Review Master! 👋', style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(height: 8),
+            Text(
+              'Your average activity this week is 75%, it is very good enough.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        );
+
+        final date = Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -88,8 +60,20 @@ class _DashboardHeader extends StatelessWidget {
             border: Border.all(color: AppColors.border),
           ),
           child: const Text('01 Aug 2026', style: TextStyle(fontWeight: FontWeight.w700)),
-        ),
-      ],
+        );
+
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [title, const SizedBox(height: 14), date],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [Expanded(child: title), date],
+        );
+      },
     );
   }
 }
@@ -113,7 +97,7 @@ class _MetricsGrid extends StatelessWidget {
           crossAxisCount: count,
           crossAxisSpacing: 18,
           mainAxisSpacing: 18,
-          childAspectRatio: count == 1 ? 2.25 : 1.62,
+          childAspectRatio: count == 1 ? 2.35 : 1.85,
           children: const [
             _MetricCard(title: 'Total class', value: '100', trend: '15%', positive: true, variant: _MetricVariant.bars),
             _MetricCard(title: 'Total students', value: '124', trend: '10%', positive: true, variant: _MetricVariant.line),
@@ -229,8 +213,8 @@ class _MetricCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 96,
-                  height: 78,
+                  width: 86,
+                  height: 70,
                   child: _MiniChart(variant: variant, positive: positive),
                 ),
               ],
@@ -293,10 +277,10 @@ class _MiniChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.end,
           children: const [
-            _ChartBar(height: 32, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 26, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 45, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 36, color: AppColors.error),
+            _ChartBar(height: 28, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 24, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 40, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 34, color: AppColors.error),
           ],
         );
       case _MetricVariant.bars:
@@ -304,10 +288,10 @@ class _MiniChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const _ChartBar(height: 50, color: Color(0xFFF0F2F5)),
-            const _ChartBar(height: 38, color: Color(0xFFF0F2F5)),
-            _ChartBar(height: 68, color: positive ? AppColors.primary : AppColors.error),
-            const _ChartBar(height: 54, color: Color(0xFFF0F2F5)),
+            const _ChartBar(height: 44, color: Color(0xFFF0F2F5)),
+            const _ChartBar(height: 34, color: Color(0xFFF0F2F5)),
+            _ChartBar(height: 60, color: positive ? AppColors.primary : AppColors.error),
+            const _ChartBar(height: 48, color: Color(0xFFF0F2F5)),
           ],
         );
     }
@@ -323,13 +307,10 @@ class _ChartBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 18,
+      width: 15,
       height: height,
-      margin: const EdgeInsets.only(left: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(5),
-      ),
+      margin: const EdgeInsets.only(left: 4),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(5)),
     );
   }
 }
@@ -355,6 +336,41 @@ class _LineChartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+class _UpcomingClassList extends StatelessWidget {
+  const _UpcomingClassList();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 190,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: const [
+          _ClassCard(
+            highlighted: true,
+            title: 'Contextual understanding and design process flow',
+            label: 'UI/UX FUNDAMENTAL',
+            time: '14 Hours',
+            buttonText: 'START THE CLASS',
+          ),
+          _ClassCard(
+            title: 'Introduction to foundation of desk research and how to present',
+            label: 'UI/UX FUNDAMENTAL',
+            time: '20 Hours',
+            buttonText: 'UPCOMING CLASS',
+          ),
+          _ClassCard(
+            title: 'Basic illustration and adobe illustrator',
+            label: 'UI/UX FUNDAMENTAL',
+            time: '18 Hours',
+            buttonText: 'UPCOMING CLASS',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ClassCard extends StatelessWidget {
   final bool highlighted;
   final String title;
@@ -376,17 +392,15 @@ class _ClassCard extends StatelessWidget {
     final foreground = highlighted ? Colors.white : AppColors.text;
 
     return Container(
-      width: 390,
+      width: 370,
       margin: const EdgeInsets.only(right: 18),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: highlighted ? Colors.transparent : AppColors.border),
         boxShadow: highlighted
-            ? const [
-                BoxShadow(color: Color(0x330F9F9A), blurRadius: 22, offset: Offset(0, 12)),
-              ]
+            ? const [BoxShadow(color: Color(0x330F9F9A), blurRadius: 22, offset: Offset(0, 12))]
             : null,
       ),
       child: Column(
@@ -422,17 +436,19 @@ class _ClassCard extends StatelessWidget {
           const Spacer(),
           Row(
             children: [
-              OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: highlighted ? AppColors.secondary : Colors.transparent,
-                  foregroundColor: highlighted ? Colors.white : AppColors.secondary,
-                  side: const BorderSide(color: AppColors.secondary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              Flexible(
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: highlighted ? AppColors.secondary : Colors.transparent,
+                    foregroundColor: highlighted ? Colors.white : AppColors.secondary,
+                    side: const BorderSide(color: AppColors.secondary),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  ),
+                  child: FittedBox(child: Text(buttonText)),
                 ),
-                child: Text(buttonText),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               const _AvatarStack(),
             ],
           ),
@@ -448,17 +464,17 @@ class _AvatarStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 94,
-      height: 34,
+      width: 86,
+      height: 32,
       child: Stack(
         children: const [
           _SmallAvatar(left: 0, color: Color(0xFFFFD4BA)),
-          _SmallAvatar(left: 22, color: Color(0xFFECC7B8)),
-          _SmallAvatar(left: 44, color: Color(0xFFBFE3DD)),
+          _SmallAvatar(left: 20, color: Color(0xFFECC7B8)),
+          _SmallAvatar(left: 40, color: Color(0xFFBFE3DD)),
           Positioned(
-            left: 66,
+            left: 60,
             child: CircleAvatar(
-              radius: 16,
+              radius: 15,
               backgroundColor: AppColors.primaryDark,
               child: Text('+22', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
             ),
@@ -480,49 +496,78 @@ class _SmallAvatar extends StatelessWidget {
     return Positioned(
       left: left,
       child: CircleAvatar(
-        radius: 16,
+        radius: 15,
         backgroundColor: Colors.white,
-        child: CircleAvatar(radius: 14, backgroundColor: color, child: const Icon(Icons.person, size: 15, color: AppColors.text)),
+        child: CircleAvatar(radius: 13, backgroundColor: color, child: const Icon(Icons.person, size: 14, color: AppColors.text)),
       ),
     );
   }
 }
 
-class _ClassroomFilters extends StatelessWidget {
-  const _ClassroomFilters();
+class _ClassroomSection extends StatelessWidget {
+  const _ClassroomSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        _ClassroomHeader(),
+        SizedBox(height: 18),
+        _ClassroomList(),
+      ],
+    );
+  }
+}
+
+class _ClassroomHeader extends StatelessWidget {
+  const _ClassroomHeader();
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 760;
+        final filters = Wrap(
+          spacing: 14,
+          runSpacing: 12,
+          children: const [
+            _FilterButton(label: 'All category'),
+            _FilterButton(label: 'All status'),
+          ],
+        );
+
+        final search = SizedBox(
+          width: compact ? double.infinity : 260,
+          height: 50,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search class',
+              prefixIcon: const Icon(Icons.search_rounded),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+        );
+
         if (compact) {
-          return const Column(
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _FilterButton(label: 'All category'),
-              SizedBox(height: 12),
-              _FilterButton(label: 'All status'),
+              Text('Classroom', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 16),
+              filters,
+              const SizedBox(height: 12),
+              search,
             ],
           );
         }
-        return Row(
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _FilterButton(label: 'All category'),
-            const SizedBox(width: 14),
-            const _FilterButton(label: 'All status'),
-            const Spacer(),
-            SizedBox(
-              width: 260,
-              height: 50,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search class',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-              ),
-            ),
+            Text('Classroom', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 18),
+            Row(children: [Expanded(child: filters), search]),
           ],
         );
       },
@@ -557,38 +602,24 @@ class _FilterButton extends StatelessWidget {
   }
 }
 
-class _ClassroomTable extends StatelessWidget {
-  const _ClassroomTable();
+class _ClassroomList extends StatelessWidget {
+  const _ClassroomList();
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: 1120,
-            child: Column(
-              children: const [
-                _TableRowItem(header: true),
-                Divider(height: 1, color: AppColors.border),
-                _TableRowItem(title: 'UI/UX fundamental', category: 'UI/UX', duration: '14 Hours', status: 'In progress', completed: '9/16 Completed', progress: .72),
-                Divider(height: 1, color: AppColors.border),
-                _TableRowItem(title: 'Anatomy mastery review', category: 'Science', duration: '10 Hours', status: 'Upcoming', completed: '4/12 Completed', progress: .34),
-                Divider(height: 1, color: AppColors.border),
-                _TableRowItem(title: 'Pharmacology drills', category: 'Health', duration: '18 Hours', status: 'Completed', completed: '20/20 Completed', progress: 1),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return Column(
+      children: const [
+        _ClassroomRow(title: 'UI/UX fundamental', category: 'UI/UX', duration: '14 Hours', status: 'In progress', completed: '9/16 Completed', progress: .72),
+        SizedBox(height: 12),
+        _ClassroomRow(title: 'Anatomy mastery review', category: 'Science', duration: '10 Hours', status: 'Upcoming', completed: '4/12 Completed', progress: .34),
+        SizedBox(height: 12),
+        _ClassroomRow(title: 'Pharmacology drills', category: 'Health', duration: '18 Hours', status: 'Completed', completed: '20/20 Completed', progress: 1),
+      ],
     );
   }
 }
 
-class _TableRowItem extends StatelessWidget {
-  final bool header;
+class _ClassroomRow extends StatelessWidget {
   final String title;
   final String category;
   final String duration;
@@ -596,65 +627,148 @@ class _TableRowItem extends StatelessWidget {
   final String completed;
   final double progress;
 
-  const _TableRowItem({
-    this.header = false,
-    this.title = 'Class title',
-    this.category = 'Category',
-    this.duration = 'Duration',
-    this.status = 'Status',
-    this.completed = 'Completion rate',
-    this.progress = 0,
+  const _ClassroomRow({
+    required this.title,
+    required this.category,
+    required this.duration,
+    required this.status,
+    required this.completed,
+    required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(fontWeight: header ? FontWeight.w800 : FontWeight.w600, color: header ? AppColors.text : AppColors.textMuted);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-      color: header ? AppColors.surface : Colors.white,
-      child: Row(
-        children: [
-          SizedBox(width: 26, child: Checkbox(value: false, onChanged: (_) {})),
-          const SizedBox(width: 8),
-          SizedBox(width: 230, child: Text(title, style: style, overflow: TextOverflow.ellipsis)),
-          SizedBox(width: 160, child: header ? Text('Student', style: style) : const _AvatarStack()),
-          SizedBox(width: 150, child: Text(category, style: style)),
-          SizedBox(width: 140, child: Text(duration, style: style)),
-          SizedBox(
-            width: 170,
-            child: header
-                ? Text(status, style: style)
-                : Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: status == 'In progress' ? AppColors.secondarySoft : AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(status, style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w800)),
-                    ),
-                  ),
-          ),
-          SizedBox(
-            width: 190,
-            child: header
-                ? Text(completed, style: style)
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 840;
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ClassTitle(title: title),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 18,
+                    runSpacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(value: progress, minHeight: 7, color: AppColors.secondary, backgroundColor: AppColors.mutedSurface),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(completed, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                      _InfoPill(label: 'Category', value: category),
+                      _InfoPill(label: 'Duration', value: duration),
+                      _StatusPill(status: status),
                     ],
                   ),
+                  const SizedBox(height: 14),
+                  _ProgressBlock(completed: completed, progress: progress),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(flex: 3, child: _ClassTitle(title: title)),
+                const SizedBox(width: 12),
+                const SizedBox(width: 92, child: _AvatarStack()),
+                const SizedBox(width: 12),
+                Expanded(child: Text(category, overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text(duration, overflow: TextOverflow.ellipsis)),
+                SizedBox(width: 140, child: _StatusPill(status: status)),
+                const SizedBox(width: 16),
+                SizedBox(width: 180, child: _ProgressBlock(completed: completed, progress: progress)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ClassTitle extends StatelessWidget {
+  final String title;
+
+  const _ClassTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Checkbox(value: false, onChanged: (_) {}),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoPill({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: '$label: ', style: const TextStyle(color: AppColors.textMuted)),
+          TextSpan(text: value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],
       ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String status;
+
+  const _StatusPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: status == 'In progress' ? AppColors.secondarySoft : AppColors.primarySoft,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(status, style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w800)),
+      ),
+    );
+  }
+}
+
+class _ProgressBlock extends StatelessWidget {
+  final String completed;
+  final double progress;
+
+  const _ProgressBlock({required this.completed, required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(value: progress, minHeight: 7, color: AppColors.secondary, backgroundColor: AppColors.mutedSurface),
+        ),
+        const SizedBox(height: 7),
+        Text(completed, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+      ],
     );
   }
 }
