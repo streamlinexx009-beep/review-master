@@ -2,11 +2,12 @@
 -- Date: 2026-06-22
 -- Purpose:
 --   1. Prevent profile role self-escalation from the client.
---   2. Remove broad student read policies from raw question tables that may expose correct_answer.
+--   2. Document the next non-breaking step for assessment integrity.
 --
--- Important frontend note:
---   Student-facing exam/quiz flows should use safe RPCs/views that omit correct_answer
---   until server-side scoring is implemented. Staff can still manage raw question tables.
+-- This migration intentionally does NOT remove direct question-table reads yet,
+-- because the current Flutter exam/practice flows still read question rows directly.
+-- Removing those policies must be paired with student-safe RPCs/views and
+-- server-side scoring to avoid breaking active exam/quiz/practice screens.
 
 begin;
 
@@ -36,28 +37,5 @@ create trigger prevent_profile_role_escalation
 before update of role on public.profiles
 for each row
 execute function private.prevent_profile_role_escalation();
-
--- Raw question tables can contain correct_answer. Keep staff write access, but do not
--- allow broad direct student reads from these base tables.
-do $$
-declare
-  t text;
-begin
-  foreach t in array array[
-    'quiz_questions',
-    'exam_questions',
-    'topic_quiz_questions',
-    'topic_exam_questions',
-    'practice_questions'
-  ] loop
-    execute format('drop policy if exists review_master_questions_read on public.%I', t);
-
-    execute format('drop policy if exists review_master_questions_staff_select on public.%I', t);
-    execute format(
-      'create policy review_master_questions_staff_select on public.%I for select to authenticated using (private.is_instructor_or_admin())',
-      t
-    );
-  end loop;
-end $$;
 
 commit;
