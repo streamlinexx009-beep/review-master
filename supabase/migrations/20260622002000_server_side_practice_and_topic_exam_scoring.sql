@@ -65,15 +65,6 @@ begin
   )
   returning id into v_attempt_id;
 
-  perform public.calculate_topic_mastery(v_user_id, p_topic_id)
-  where exists (
-    select 1
-    from pg_proc p
-    join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public'
-      and p.proname = 'calculate_topic_mastery'
-  );
-
   return v_attempt_id;
 end;
 $$;
@@ -183,15 +174,6 @@ begin
   left join submitted_answers sa on sa.question_id = q.id
   where q.exam_id = p_exam_id
   order by q.created_at;
-
-  perform public.calculate_topic_mastery(v_user_id, v_topic_id)
-  where exists (
-    select 1
-    from pg_proc p
-    join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public'
-      and p.proname = 'calculate_topic_mastery'
-  );
 
   return v_attempt_id;
 end;
