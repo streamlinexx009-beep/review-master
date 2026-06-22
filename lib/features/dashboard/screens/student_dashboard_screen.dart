@@ -55,9 +55,9 @@ class _HeroAndHighlights extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Expanded(flex: 5, child: hero),
+            Expanded(flex: 5, child: hero),
             const SizedBox(width: 18),
-            const Expanded(flex: 4, child: highlights),
+            Expanded(flex: 4, child: highlights),
           ],
         );
       },
