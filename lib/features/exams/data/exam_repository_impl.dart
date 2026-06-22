@@ -87,11 +87,53 @@ class ExamRepositoryImpl implements ExamRepository {
       throw Exception('User not authenticated');
     }
 
+    final sanitizedAnswers = answers.map((answer) {
+      return {
+        'question_id': answer['question_id'],
+        'selected_answer': answer['selected_answer'],
+      };
+    }).toList();
+
+    try {
+      await client.rpc(
+        'submit_exam_attempt_secure',
+        params: {
+          'p_exam_id': examId,
+          'p_answers': sanitizedAnswers,
+        },
+      );
+
+      return;
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('submit_exam_attempt_secure');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
+    await _submitExamLegacy(
+      examId: examId,
+      score: score,
+      passed: passed,
+      answers: answers,
+      studentId: user.id,
+    );
+  }
+
+  Future<void> _submitExamLegacy({
+    required String examId,
+    required double score,
+    required bool passed,
+    required List<Map<String, dynamic>> answers,
+    required String studentId,
+  }) async {
     final attempt = await client
         .from('exam_attempts')
         .insert({
           'exam_id': examId,
-          'student_id': user.id,
+          'student_id': studentId,
           'score': score,
           'passed': passed,
         })
