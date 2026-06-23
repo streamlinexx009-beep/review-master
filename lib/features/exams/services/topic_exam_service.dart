@@ -14,6 +14,22 @@ class TopicExamService {
   }
 
   static Future<List<Map<String, dynamic>>> getQuestions(String examId) async {
+    try {
+      final result = await _supabase.rpc(
+        'get_topic_exam_questions_safe',
+        params: {'p_exam_id': examId},
+      );
+
+      return List<Map<String, dynamic>>.from(result);
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('get_topic_exam_questions_safe');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
     final result = await _supabase
         .from('topic_exam_questions')
         .select()
@@ -22,7 +38,7 @@ class TopicExamService {
     return List<Map<String, dynamic>>.from(result);
   }
 
-  static Future<bool> submitAttemptSecure({
+  static Future<Map<String, dynamic>?> submitAttemptSecure({
     required String examId,
     required List<Map<String, dynamic>> answers,
   }) async {
@@ -34,23 +50,35 @@ class TopicExamService {
     }).toList();
 
     try {
-      await _supabase.rpc(
+      final result = await _supabase.rpc(
         'submit_topic_exam_attempt_secure',
         params: {
           'p_exam_id': examId,
           'p_answers': sanitizedAnswers,
         },
       );
-      return true;
+      return _asMap(result);
     } on PostgrestException catch (error) {
       final missingRpc = error.code == '42883' ||
           error.message.toLowerCase().contains('submit_topic_exam_attempt_secure');
 
       if (missingRpc) {
-        return false;
+        return null;
       }
 
       rethrow;
     }
+  }
+
+  static Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return <String, dynamic>{};
   }
 }
