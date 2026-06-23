@@ -4,7 +4,7 @@ This document captures practical upgrades that will make ReviewHub more reliable
 
 ## 1. Assessment integrity
 
-Current state: the app can show immediate feedback, but exam/practice flows still expose enough data on the client to make tampering possible.
+Current state: the app can show immediate feedback, but raw question reads still expose answer data to the client until safe student-facing RPCs/views are added.
 
 Recommended path:
 
@@ -16,7 +16,9 @@ Recommended path:
 Status in this branch:
 
 - `submit_exam_attempt_secure` was added for server-side saved exam scoring.
-- Flutter now tries that RPC first and falls back to legacy submission if the migration is not applied yet.
+- `submit_practice_attempt_secure` was added for server-side saved practice scoring.
+- `submit_topic_exam_attempt_secure` was added for server-side saved topic-exam scoring.
+- Flutter tries secure RPCs first and falls back to legacy submission if the matching migration is not applied yet.
 
 ## 2. Role and access control
 
@@ -83,7 +85,7 @@ Recommended path:
 
 1. Apply role-escalation migration.
 2. Apply server-side exam scoring migration.
-3. Add safe question RPCs and remove raw question-table reads for students.
-4. Convert practice and topic exams to server-side scoring.
+3. Apply server-side practice and topic-exam scoring migration.
+4. Add safe question RPCs and remove raw question-table reads for students.
 5. Replace dashboard placeholder stats with live provider-backed data.
 6. Add CI migration validation and basic widget tests.
