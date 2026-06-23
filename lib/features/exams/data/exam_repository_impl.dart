@@ -20,6 +20,24 @@ class ExamRepositoryImpl implements ExamRepository {
 
   @override
   Future<List<ExamQuestionModel>> getQuestions(String examId) async {
+    try {
+      final data = await client.rpc(
+        'get_exam_questions_safe',
+        params: {'p_exam_id': examId},
+      );
+
+      return List<Map<String, dynamic>>.from(data)
+          .map<ExamQuestionModel>((e) => ExamQuestionModel.fromMap(e))
+          .toList();
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('get_exam_questions_safe');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
     final data = await client
         .from('exam_questions')
         .select()
@@ -75,7 +93,7 @@ class ExamRepositoryImpl implements ExamRepository {
   }
 
   @override
-  Future<void> submitExam({
+  Future<Map<String, dynamic>> submitExam({
     required String examId,
     required double score,
     required bool passed,
@@ -95,7 +113,7 @@ class ExamRepositoryImpl implements ExamRepository {
     }).toList();
 
     try {
-      await client.rpc(
+      final result = await client.rpc(
         'submit_exam_attempt_secure',
         params: {
           'p_exam_id': examId,
@@ -103,7 +121,7 @@ class ExamRepositoryImpl implements ExamRepository {
         },
       );
 
-      return;
+      return _asMap(result);
     } on PostgrestException catch (error) {
       final missingRpc = error.code == '42883' ||
           error.message.toLowerCase().contains('submit_exam_attempt_secure');
@@ -113,7 +131,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
     }
 
-    await _submitExamLegacy(
+    return _submitExamLegacy(
       examId: examId,
       score: score,
       passed: passed,
@@ -122,7 +140,7 @@ class ExamRepositoryImpl implements ExamRepository {
     );
   }
 
-  Future<void> _submitExamLegacy({
+  Future<Map<String, dynamic>> _submitExamLegacy({
     required String examId,
     required double score,
     required bool passed,
@@ -154,6 +172,26 @@ class ExamRepositoryImpl implements ExamRepository {
     if (answerRows.isNotEmpty) {
       await client.from('exam_attempt_answers').insert(answerRows);
     }
+
+    return {
+      'attempt_id': attemptId,
+      'score': score,
+      'passed': passed,
+      'correct_answers': answerRows.where((answer) => answer['is_correct'] == true).length,
+      'total_questions': answerRows.length,
+    };
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return <String, dynamic>{};
   }
 
   @override
