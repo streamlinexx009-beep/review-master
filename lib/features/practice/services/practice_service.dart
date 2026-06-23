@@ -16,6 +16,27 @@ class PracticeService {
   }
 
   Future<List<PracticeQuestion>> getPracticeQuestions(String topicId) async {
+    try {
+      final data = await _supabase.rpc(
+        'get_practice_questions_safe',
+        params: {
+          'p_topic_id': topicId,
+          'p_limit': 10,
+        },
+      );
+
+      return List<Map<String, dynamic>>.from(data)
+          .map<PracticeQuestion>((item) => PracticeQuestion.fromMap(item))
+          .toList();
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('get_practice_questions_safe');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
     final data = await _supabase
         .from('topic_quiz_questions')
         .select()
@@ -29,7 +50,7 @@ class PracticeService {
         .toList();
   }
 
-  Future<void> saveAttempt({
+  Future<Map<String, dynamic>> saveAttempt({
     required String userId,
     required String topicId,
     required int score,
@@ -37,28 +58,34 @@ class PracticeService {
     List<Map<String, dynamic>>? answers,
   }) async {
     if (answers != null && answers.isNotEmpty) {
-      final savedSecurely = await _trySaveSecureAttempt(
+      final secureResult = await _trySaveSecureAttempt(
         topicId: topicId,
         answers: answers,
       );
 
-      if (savedSecurely) {
-        final percentage = totalQuestions == 0 ? 0.0 : (score / totalQuestions) * 100;
+      if (secureResult != null) {
+        final percentage = (secureResult['score'] as num?)?.toDouble() ??
+            (totalQuestions == 0 ? 0.0 : (score / totalQuestions) * 100);
+
         await TopicMasteryService().updatePracticeMastery(
           studentId: userId,
           topicId: topicId,
           score: percentage,
         );
-        return;
+        return secureResult;
       }
     }
 
-    await _supabase.from('practice_attempts').insert({
-      'user_id': userId,
-      'topic_id': topicId,
-      'score': score,
-      'total_questions': totalQuestions,
-    });
+    final attempt = await _supabase
+        .from('practice_attempts')
+        .insert({
+          'user_id': userId,
+          'topic_id': topicId,
+          'score': score,
+          'total_questions': totalQuestions,
+        })
+        .select('id')
+        .single();
 
     final percentage = totalQuestions == 0 ? 0.0 : (score / totalQuestions) * 100;
 
@@ -67,9 +94,16 @@ class PracticeService {
       topicId: topicId,
       score: percentage,
     );
+
+    return {
+      'attempt_id': attempt['id'],
+      'score': percentage,
+      'correct_answers': score,
+      'total_questions': totalQuestions,
+    };
   }
 
-  Future<bool> _trySaveSecureAttempt({
+  Future<Map<String, dynamic>?> _trySaveSecureAttempt({
     required String topicId,
     required List<Map<String, dynamic>> answers,
   }) async {
@@ -81,24 +115,36 @@ class PracticeService {
     }).toList();
 
     try {
-      await _supabase.rpc(
+      final result = await _supabase.rpc(
         'submit_practice_attempt_secure',
         params: {
           'p_topic_id': topicId,
           'p_answers': sanitizedAnswers,
         },
       );
-      return true;
+      return _asMap(result);
     } on PostgrestException catch (error) {
       final missingRpc = error.code == '42883' ||
           error.message.toLowerCase().contains('submit_practice_attempt_secure');
 
       if (missingRpc) {
-        return false;
+        return null;
       }
 
       rethrow;
     }
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return <String, dynamic>{};
   }
 
   Future<List<Map<String, dynamic>>> getAttempts(String topicId) async {
@@ -140,7 +186,7 @@ class PracticeService {
     return data.first;
   }
 
-  Future<List<Map<String, dynamic>>> getPracticeAttempts(String topicId) async {
+  Future<List<Map<String, dynamic>>> getPracticeAttempts(String topicId) {
     return getAttempts(topicId);
   }
 }
