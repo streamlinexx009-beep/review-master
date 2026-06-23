@@ -1,9 +1,6 @@
 class ExamQuestionModel {
-
   final String id;
-
   final String examId;
-
   final String questionText;
 
   final String? optionA;
@@ -24,20 +21,16 @@ class ExamQuestionModel {
     this.optionD,
   });
 
-  factory ExamQuestionModel.fromMap(
-    Map<String,dynamic> map,
-  ) {
+  factory ExamQuestionModel.fromMap(Map<String, dynamic> map) {
     return ExamQuestionModel(
-      id: map['id'],
-      examId: map['exam_id'],
-      questionText:
-          map['question_text'],
-      optionA: map['option_a'],
-      optionB: map['option_b'],
-      optionC: map['option_c'],
-      optionD: map['option_d'],
-      correctAnswer:
-          map['correct_answer'],
+      id: map['id']?.toString() ?? '',
+      examId: map['exam_id']?.toString() ?? '',
+      questionText: map['question_text']?.toString() ?? '',
+      optionA: map['option_a']?.toString(),
+      optionB: map['option_b']?.toString(),
+      optionC: map['option_c']?.toString(),
+      optionD: map['option_d']?.toString(),
+      correctAnswer: map['correct_answer']?.toString() ?? '',
     );
   }
 }
