@@ -114,7 +114,7 @@ class ExamRepositoryImpl implements ExamRepository {
 
     try {
       final result = await client.rpc(
-        'submit_exam_attempt_secure',
+        'submit_exam_attempt_secure_result',
         params: {
           'p_exam_id': examId,
           'p_answers': sanitizedAnswers,
@@ -122,6 +122,30 @@ class ExamRepositoryImpl implements ExamRepository {
       );
 
       return _asMap(result);
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('submit_exam_attempt_secure_result');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
+    try {
+      await client.rpc(
+        'submit_exam_attempt_secure',
+        params: {
+          'p_exam_id': examId,
+          'p_answers': sanitizedAnswers,
+        },
+      );
+
+      return {
+        'score': score,
+        'passed': passed,
+        'correct_answers': answers.where((answer) => answer['is_correct'] == true).length,
+        'total_questions': answers.length,
+      };
     } on PostgrestException catch (error) {
       final missingRpc = error.code == '42883' ||
           error.message.toLowerCase().contains('submit_exam_attempt_secure');
