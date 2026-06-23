@@ -6,10 +6,7 @@ import '../models/exam_attempt_answer_model.dart';
 abstract class ExamRepository {
   Future<List<ExamModel>> getExams();
 
-  Future<List<ExamQuestionModel>>
-      getQuestions(
-    String examId,
-  );
+  Future<List<ExamQuestionModel>> getQuestions(String examId);
 
   Future<void> createExam({
     required String title,
@@ -29,19 +26,14 @@ abstract class ExamRepository {
     required String correctAnswer,
   });
 
-  Future<void> submitExam({
-  required String examId,
-  required double score,
-  required bool passed,
-  required List<Map<String, dynamic>> answers,
-});
+  Future<Map<String, dynamic>> submitExam({
+    required String examId,
+    required double score,
+    required bool passed,
+    required List<Map<String, dynamic>> answers,
+  });
 
-Future<List<ExamAttemptAnswerModel>>
-    getAttemptAnswers(
-  String attemptId,
-);
+  Future<List<ExamAttemptAnswerModel>> getAttemptAnswers(String attemptId);
 
-  Future<List<ExamAttemptModel>>
-      getMyAttempts();
+  Future<List<ExamAttemptModel>> getMyAttempts();
 }
-
