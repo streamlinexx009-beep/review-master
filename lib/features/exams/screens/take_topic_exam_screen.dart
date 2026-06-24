@@ -59,18 +59,23 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
     });
 
     try {
-      var correct = 0;
+      var localCorrect = 0;
+      final hasLocalAnswers = questions.every((question) {
+        final answer = question['correct_answer'];
+        return answer is String && answer.isNotEmpty;
+      });
 
-      for (final question in questions) {
-        final selected = answers[question['id']];
-
-        if (selected == question['correct_answer']) {
-          correct++;
+      if (hasLocalAnswers) {
+        for (final question in questions) {
+          final selected = answers[question['id']];
+          if (selected == question['correct_answer']) {
+            localCorrect++;
+          }
         }
       }
 
-      final score = (correct / questions.length) * 100;
-      final passed = score >= 75;
+      final localScore = questions.isEmpty ? 0.0 : (localCorrect / questions.length) * 100;
+      final localPassed = localScore >= 75;
 
       final examData = await _supabase
           .from('topic_exams')
@@ -78,29 +83,31 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
           .eq('id', widget.examId)
           .maybeSingle();
 
-      final topicId = examData?['topic_id'] as String?;
+      var topicId = examData?['topic_id'] as String?;
 
       final answerPayload = questions.map((question) {
-        final selected = answers[question['id']] ?? '';
-
         return {
           'question_id': question['id'],
-          'selected_answer': selected,
+          'selected_answer': answers[question['id']] ?? '',
         };
       }).toList();
 
-      final savedSecurely = await TopicExamService.submitAttemptSecure(
+      final secureResult = await TopicExamService.submitAttemptSecure(
         examId: widget.examId,
         answers: answerPayload,
       );
 
-      if (!savedSecurely) {
+      if (secureResult == null) {
         await _submitLegacyAttempt(
           userId: user.id,
-          score: score,
-          passed: passed,
+          score: localScore,
+          passed: localPassed,
         );
       }
+
+      topicId = (secureResult?['topic_id'] as String?) ?? topicId;
+      final score = (secureResult?['score'] as num?)?.toDouble() ?? localScore;
+      final passed = secureResult?['passed'] as bool? ?? localPassed;
 
       if (topicId != null) {
         await TopicMasteryService().updateExamMastery(
@@ -189,9 +196,7 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Take Topic Exam'),
-      ),
+      appBar: AppBar(title: const Text('Take Topic Exam')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : questions.isEmpty
@@ -261,7 +266,6 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
           ? null
           : (value) {
               if (value == null) return;
-
               setState(() {
                 answers[question['id']] = value;
               });
