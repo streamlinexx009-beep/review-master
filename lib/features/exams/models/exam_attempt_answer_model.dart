@@ -24,40 +24,20 @@ class ExamAttemptAnswerModel {
     required this.isCorrect,
   });
 
-  factory ExamAttemptAnswerModel.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory ExamAttemptAnswerModel.fromMap(Map<String, dynamic> map) {
+    final question = map['exam_questions'];
+    final questionMap = question is Map ? Map<String, dynamic>.from(question) : <String, dynamic>{};
+
     return ExamAttemptAnswerModel(
-      questionId: map['question_id'],
-
-      questionText:
-          map['exam_questions']
-              ['question_text'],
-
-      optionA:
-          map['exam_questions']
-              ['option_a'],
-
-      optionB:
-          map['exam_questions']
-              ['option_b'],
-
-      optionC:
-          map['exam_questions']
-              ['option_c'],
-
-      optionD:
-          map['exam_questions']
-              ['option_d'],
-
-      selectedAnswer:
-          map['selected_answer'],
-
-      correctAnswer:
-          map['correct_answer'],
-
-      isCorrect:
-          map['is_correct'],
+      questionId: map['question_id']?.toString() ?? '',
+      questionText: (questionMap['question_text'] ?? map['question_text'] ?? map['question'])?.toString() ?? '',
+      optionA: (questionMap['option_a'] ?? map['option_a'])?.toString() ?? '',
+      optionB: (questionMap['option_b'] ?? map['option_b'])?.toString() ?? '',
+      optionC: (questionMap['option_c'] ?? map['option_c'])?.toString() ?? '',
+      optionD: (questionMap['option_d'] ?? map['option_d'])?.toString() ?? '',
+      selectedAnswer: map['selected_answer']?.toString() ?? '',
+      correctAnswer: map['correct_answer']?.toString() ?? '',
+      isCorrect: map['is_correct'] == true,
     );
   }
 }

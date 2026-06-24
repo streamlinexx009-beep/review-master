@@ -20,6 +20,24 @@ class ExamRepositoryImpl implements ExamRepository {
 
   @override
   Future<List<ExamQuestionModel>> getQuestions(String examId) async {
+    try {
+      final data = await client.rpc(
+        'get_exam_questions_safe',
+        params: {'p_exam_id': examId},
+      );
+
+      return List<Map<String, dynamic>>.from(data)
+          .map<ExamQuestionModel>((e) => ExamQuestionModel.fromMap(e))
+          .toList();
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('get_exam_questions_safe');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
     final data = await client
         .from('exam_questions')
         .select()
@@ -75,7 +93,7 @@ class ExamRepositoryImpl implements ExamRepository {
   }
 
   @override
-  Future<void> submitExam({
+  Future<Map<String, dynamic>> submitExam({
     required String examId,
     required double score,
     required bool passed,
@@ -87,11 +105,77 @@ class ExamRepositoryImpl implements ExamRepository {
       throw Exception('User not authenticated');
     }
 
+    final sanitizedAnswers = answers.map((answer) {
+      return {
+        'question_id': answer['question_id'],
+        'selected_answer': answer['selected_answer'],
+      };
+    }).toList();
+
+    try {
+      final result = await client.rpc(
+        'submit_exam_attempt_secure_result',
+        params: {
+          'p_exam_id': examId,
+          'p_answers': sanitizedAnswers,
+        },
+      );
+
+      return _asMap(result);
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('submit_exam_attempt_secure_result');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
+    try {
+      await client.rpc(
+        'submit_exam_attempt_secure',
+        params: {
+          'p_exam_id': examId,
+          'p_answers': sanitizedAnswers,
+        },
+      );
+
+      return {
+        'score': score,
+        'passed': passed,
+        'correct_answers': answers.where((answer) => answer['is_correct'] == true).length,
+        'total_questions': answers.length,
+      };
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('submit_exam_attempt_secure');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
+    return _submitExamLegacy(
+      examId: examId,
+      score: score,
+      passed: passed,
+      answers: answers,
+      studentId: user.id,
+    );
+  }
+
+  Future<Map<String, dynamic>> _submitExamLegacy({
+    required String examId,
+    required double score,
+    required bool passed,
+    required List<Map<String, dynamic>> answers,
+    required String studentId,
+  }) async {
     final attempt = await client
         .from('exam_attempts')
         .insert({
           'exam_id': examId,
-          'student_id': user.id,
+          'student_id': studentId,
           'score': score,
           'passed': passed,
         })
@@ -112,6 +196,26 @@ class ExamRepositoryImpl implements ExamRepository {
     if (answerRows.isNotEmpty) {
       await client.from('exam_attempt_answers').insert(answerRows);
     }
+
+    return {
+      'attempt_id': attemptId,
+      'score': score,
+      'passed': passed,
+      'correct_answers': answerRows.where((answer) => answer['is_correct'] == true).length,
+      'total_questions': answerRows.length,
+    };
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return <String, dynamic>{};
   }
 
   @override

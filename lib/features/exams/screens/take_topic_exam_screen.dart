@@ -59,46 +59,23 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
     });
 
     try {
-      var correct = 0;
+      var localCorrect = 0;
+      final hasLocalAnswers = questions.every((question) {
+        final answer = question['correct_answer'];
+        return answer is String && answer.isNotEmpty;
+      });
 
-      for (final question in questions) {
-        final selected = answers[question['id']];
-
-        if (selected == question['correct_answer']) {
-          correct++;
+      if (hasLocalAnswers) {
+        for (final question in questions) {
+          final selected = answers[question['id']];
+          if (selected == question['correct_answer']) {
+            localCorrect++;
+          }
         }
       }
 
-      final score = (correct / questions.length) * 100;
-      final passed = score >= 75;
-
-      final attempt = await _supabase
-          .from('topic_exam_attempts')
-          .insert({
-            'topic_exam_id': widget.examId,
-            'student_id': user.id,
-            'score': score,
-            'passed': passed,
-          })
-          .select('id')
-          .single();
-
-      final attemptId = attempt['id'];
-      final answerRows = questions.map((question) {
-        final selected = answers[question['id']] ?? '';
-
-        return {
-          'attempt_id': attemptId,
-          'question_id': question['id'],
-          'selected_answer': selected,
-          'correct_answer': question['correct_answer'],
-          'is_correct': selected == question['correct_answer'],
-        };
-      }).toList();
-
-      if (answerRows.isNotEmpty) {
-        await _supabase.from('topic_exam_attempt_answers').insert(answerRows);
-      }
+      final localScore = questions.isEmpty ? 0.0 : (localCorrect / questions.length) * 100;
+      final localPassed = localScore >= 75;
 
       final examData = await _supabase
           .from('topic_exams')
@@ -106,7 +83,31 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
           .eq('id', widget.examId)
           .maybeSingle();
 
-      final topicId = examData?['topic_id'] as String?;
+      var topicId = examData?['topic_id'] as String?;
+
+      final answerPayload = questions.map((question) {
+        return {
+          'question_id': question['id'],
+          'selected_answer': answers[question['id']] ?? '',
+        };
+      }).toList();
+
+      final secureResult = await TopicExamService.submitAttemptSecure(
+        examId: widget.examId,
+        answers: answerPayload,
+      );
+
+      if (secureResult == null) {
+        await _submitLegacyAttempt(
+          userId: user.id,
+          score: localScore,
+          passed: localPassed,
+        );
+      }
+
+      topicId = (secureResult?['topic_id'] as String?) ?? topicId;
+      final score = (secureResult?['score'] as num?)?.toDouble() ?? localScore;
+      final passed = secureResult?['passed'] as bool? ?? localPassed;
 
       if (topicId != null) {
         await TopicMasteryService().updateExamMastery(
@@ -143,6 +144,12 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
           ],
         ),
       );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit topic exam: $error')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -152,12 +159,44 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
     }
   }
 
+  Future<void> _submitLegacyAttempt({
+    required String userId,
+    required double score,
+    required bool passed,
+  }) async {
+    final attempt = await _supabase
+        .from('topic_exam_attempts')
+        .insert({
+          'topic_exam_id': widget.examId,
+          'student_id': userId,
+          'score': score,
+          'passed': passed,
+        })
+        .select('id')
+        .single();
+
+    final attemptId = attempt['id'];
+    final answerRows = questions.map((question) {
+      final selected = answers[question['id']] ?? '';
+
+      return {
+        'attempt_id': attemptId,
+        'question_id': question['id'],
+        'selected_answer': selected,
+        'correct_answer': question['correct_answer'],
+        'is_correct': selected == question['correct_answer'],
+      };
+    }).toList();
+
+    if (answerRows.isNotEmpty) {
+      await _supabase.from('topic_exam_attempt_answers').insert(answerRows);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Take Topic Exam'),
-      ),
+      appBar: AppBar(title: const Text('Take Topic Exam')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : questions.isEmpty
@@ -227,7 +266,6 @@ class _TakeTopicExamScreenState extends State<TakeTopicExamScreen> {
           ? null
           : (value) {
               if (value == null) return;
-
               setState(() {
                 answers[question['id']] = value;
               });

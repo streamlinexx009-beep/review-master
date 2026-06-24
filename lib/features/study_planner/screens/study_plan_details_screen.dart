@@ -120,10 +120,7 @@ class _StudyPlanDetailsScreenState
                           .start,
                   children: [
                     Text(
-                      widget
-                              .plan
-                              .description ??
-                          '',
+                      widget.plan.description,
                       style:
                           TextStyle(
                         color: Colors

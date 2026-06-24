@@ -1,4 +1,4 @@
-import 'study_task_model.dart';
+import '../../study_planner/models/study_task_model.dart';
 
 class StudyPlanModel {
   final String id;
@@ -22,15 +22,17 @@ class StudyPlanModel {
   factory StudyPlanModel.fromMap(
     Map<String, dynamic> map,
   ) {
+    final rawTasks = map['tasks'];
+
     return StudyPlanModel(
       id: map['id']?.toString() ?? '',
       userId:
           map['user_id']?.toString() ??
           map['student_id']?.toString() ??
           '',
-      title: map['title'] ?? '',
+      title: map['title']?.toString() ?? '',
       description:
-          map['description'] ?? '',
+          map['description']?.toString() ?? '',
       createdAt:
           map['created_at'] != null
               ? DateTime.parse(
@@ -39,18 +41,19 @@ class StudyPlanModel {
                 )
               : DateTime.now(),
       status:
-          map['status'] ??
+          map['status']?.toString() ??
           'pending',
       tasks:
-          (map['tasks'] as List?)
-                  ?.map(
-                    (task) =>
-                        StudyTaskModel.fromMap(
-                      task,
+          rawTasks is List
+              ? rawTasks
+                  .whereType<Map>()
+                  .map(
+                    (task) => StudyTaskModel.fromMap(
+                      Map<String, dynamic>.from(task),
                     ),
                   )
-                  .toList() ??
-              [],
+                  .toList()
+              : <StudyTaskModel>[],
     );
   }
 

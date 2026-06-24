@@ -41,6 +41,38 @@ import '../../features/topics/screens/topic_details_screen.dart';
 import '../../features/topics/screens/topics_screen.dart';
 import '../../shared/widgets/google_shell.dart';
 
+const _publicRoutes = {
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+};
+
+bool _isPublicRoute(String location) {
+  return _publicRoutes.contains(location);
+}
+
+bool _isStaffOnlyRoute(String location) {
+  return location.startsWith('/admin') ||
+      location.startsWith('/instructor') ||
+      location.startsWith('/create-subject') ||
+      location.startsWith('/create-exam') ||
+      location.startsWith('/create-question') ||
+      location.contains('/upload-material');
+}
+
+String _homeForRole(String? role) {
+  switch (role) {
+    case 'admin':
+      return '/admin';
+    case 'instructor':
+      return '/instructor';
+    case 'student':
+    default:
+      return '/dashboard';
+  }
+}
+
 int _getIndexFromLocation(String location) {
   if (location.startsWith('/subjects')) return 1;
   if (location.startsWith('/materials') || location.startsWith('/pdf-viewer')) return 2;
@@ -107,14 +139,8 @@ final appRouter = GoRouter(
   ),
   redirect: (context, state) async {
     final loggedIn = AuthService.isLoggedIn;
-    const publicRoutes = {
-      '/',
-      '/login',
-      '/register',
-      '/forgot-password',
-    };
-
-    final isPublic = publicRoutes.contains(state.matchedLocation);
+    final location = state.matchedLocation;
+    final isPublic = _isPublicRoute(location);
 
     if (!loggedIn && !isPublic) {
       return '/login';
@@ -123,26 +149,14 @@ final appRouter = GoRouter(
     final role = loggedIn ? await ProfileService.getUserRole() : null;
 
     if (loggedIn && isPublic) {
-      switch (role) {
-        case 'admin':
-          return '/admin';
-        case 'instructor':
-          return '/instructor';
-        case 'student':
-        default:
-          return '/dashboard';
-      }
+      return _homeForRole(role);
     }
 
-    if (role == 'student' && state.matchedLocation.startsWith('/admin')) {
+    if (role == 'student' && _isStaffOnlyRoute(location)) {
       return '/dashboard';
     }
 
-    if (role == 'student' && state.matchedLocation.startsWith('/instructor')) {
-      return '/dashboard';
-    }
-
-    if (role == 'instructor' && state.matchedLocation.startsWith('/admin')) {
+    if (role == 'instructor' && location.startsWith('/admin')) {
       return '/instructor';
     }
 

@@ -204,8 +204,7 @@ class StudyPlannerScreen extends ConsumerWidget {
                                             ),
 
                                             Text(
-                                              plan.description ??
-                                                  '',
+                                              plan.description,
                                               style:
                                                   TextStyle(
                                                 color: Colors
