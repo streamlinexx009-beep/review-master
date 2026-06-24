@@ -47,11 +47,14 @@ class _PracticeQuizPlayerScreenState extends State<PracticeQuizPlayerScreen> {
   Future<void> _submitQuiz() async {
     if (_submitting) return;
 
-    var score = 0;
+    var localScore = 0;
+    final hasLocalAnswers = _questions.every((question) => question.correctAnswer.isNotEmpty);
 
-    for (var i = 0; i < _questions.length; i++) {
-      if (_answers[i] == _questions[i].correctAnswer) {
-        score++;
+    if (hasLocalAnswers) {
+      for (var i = 0; i < _questions.length; i++) {
+        if (_answers[i] == _questions[i].correctAnswer) {
+          localScore++;
+        }
       }
     }
 
@@ -65,6 +68,8 @@ class _PracticeQuizPlayerScreenState extends State<PracticeQuizPlayerScreen> {
       _submitting = true;
     });
 
+    Map<String, dynamic> result;
+
     try {
       final answerPayload = <Map<String, dynamic>>[];
 
@@ -75,10 +80,10 @@ class _PracticeQuizPlayerScreenState extends State<PracticeQuizPlayerScreen> {
         });
       }
 
-      await _service.saveAttempt(
+      result = await _service.saveAttempt(
         userId: user.id,
         topicId: widget.topicId,
-        score: score,
+        score: localScore,
         totalQuestions: _questions.length,
         answers: answerPayload,
       );
@@ -99,14 +104,17 @@ class _PracticeQuizPlayerScreenState extends State<PracticeQuizPlayerScreen> {
 
     if (!mounted) return;
 
-    final percentage = _questions.isEmpty ? 0 : (score / _questions.length) * 100;
+    final correctAnswers = (result['correct_answers'] as num?)?.toInt() ?? localScore;
+    final totalQuestions = (result['total_questions'] as num?)?.toInt() ?? _questions.length;
+    final percentage = (result['score'] as num?)?.toDouble() ??
+        (_questions.isEmpty ? 0 : (localScore / _questions.length) * 100);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Practice Complete'),
         content: Text(
-          'Score: $score / ${_questions.length}\n\n'
+          'Score: $correctAnswers / $totalQuestions\n\n'
           'Percentage: ${percentage.toStringAsFixed(1)}%',
         ),
         actions: [
@@ -147,9 +155,7 @@ class _PracticeQuizPlayerScreenState extends State<PracticeQuizPlayerScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Question ${_currentIndex + 1}/${_questions.length}'),
-      ),
+      appBar: AppBar(title: Text('Question ${_currentIndex + 1}/${_questions.length}')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
