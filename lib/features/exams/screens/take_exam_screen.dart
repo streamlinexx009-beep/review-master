@@ -170,10 +170,10 @@ class _TakeExamScreenState extends ConsumerState<TakeExamScreen> {
                                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 24),
-                                  _AnswerOption(question: question, value: 'A', label: question.optionA),
-                                  _AnswerOption(question: question, value: 'B', label: question.optionB),
-                                  _AnswerOption(question: question, value: 'C', label: question.optionC),
-                                  _AnswerOption(question: question, value: 'D', label: question.optionD),
+                                  _answerOption(question: question, value: 'A', label: question.optionA),
+                                  _answerOption(question: question, value: 'B', label: question.optionB),
+                                  _answerOption(question: question, value: 'C', label: question.optionC),
+                                  _answerOption(question: question, value: 'D', label: question.optionD),
                                 ],
                               ),
                             ),
@@ -241,7 +241,7 @@ class _TakeExamScreenState extends ConsumerState<TakeExamScreen> {
     );
   }
 
-  Widget _AnswerOption({
+  Widget _answerOption({
     required ExamQuestionModel question,
     required String value,
     required String? label,
