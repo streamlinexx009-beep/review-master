@@ -4,7 +4,7 @@ This document captures practical upgrades that will make ReviewHub more reliable
 
 ## 1. Assessment integrity
 
-Current state: the app can show immediate feedback, but raw question reads still expose answer data to the client until safe student-facing RPCs/views are added.
+Current state: student-facing assessment screens now have safe RPC paths for loading questions without sending answer keys, and saved scoring has server-side RPC paths. The remaining important follow-up is broad end-to-end testing after applying the Supabase migrations.
 
 Recommended path:
 
@@ -15,9 +15,11 @@ Recommended path:
 
 Status in this branch:
 
-- `submit_exam_attempt_secure` was added for server-side saved exam scoring.
-- `submit_practice_attempt_secure` was added for server-side saved practice scoring.
-- `submit_topic_exam_attempt_secure` was added for server-side saved topic-exam scoring.
+- `submit_exam_attempt_secure_result` returns server-calculated exam scores.
+- `submit_practice_attempt_secure_result` returns server-calculated practice scores.
+- `submit_topic_exam_attempt_secure_result` returns server-calculated topic-exam scores.
+- `get_exam_questions_safe`, `get_practice_questions_safe`, and `get_topic_exam_questions_safe` omit answer keys for student-facing screens.
+- Raw question-table reads are locked down for students after the safe RPC migration is applied.
 - Flutter tries secure RPCs first and falls back to legacy submission if the matching migration is not applied yet.
 
 ## 2. Role and access control
@@ -86,6 +88,6 @@ Recommended path:
 1. Apply role-escalation migration.
 2. Apply server-side exam scoring migration.
 3. Apply server-side practice and topic-exam scoring migration.
-4. Add safe question RPCs and remove raw question-table reads for students.
+4. Apply safe question delivery and raw question-table lockdown migrations.
 5. Replace dashboard placeholder stats with live provider-backed data.
 6. Add CI migration validation and basic widget tests.
