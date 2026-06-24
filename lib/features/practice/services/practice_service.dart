@@ -116,13 +116,31 @@ class PracticeService {
 
     try {
       final result = await _supabase.rpc(
-        'submit_practice_attempt_secure',
+        'submit_practice_attempt_secure_result',
         params: {
           'p_topic_id': topicId,
           'p_answers': sanitizedAnswers,
         },
       );
       return _asMap(result);
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('submit_practice_attempt_secure_result');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
+    try {
+      await _supabase.rpc(
+        'submit_practice_attempt_secure',
+        params: {
+          'p_topic_id': topicId,
+          'p_answers': sanitizedAnswers,
+        },
+      );
+      return <String, dynamic>{};
     } on PostgrestException catch (error) {
       final missingRpc = error.code == '42883' ||
           error.message.toLowerCase().contains('submit_practice_attempt_secure');
