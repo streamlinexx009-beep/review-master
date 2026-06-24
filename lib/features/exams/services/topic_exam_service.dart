@@ -51,13 +51,31 @@ class TopicExamService {
 
     try {
       final result = await _supabase.rpc(
-        'submit_topic_exam_attempt_secure',
+        'submit_topic_exam_attempt_secure_result',
         params: {
           'p_exam_id': examId,
           'p_answers': sanitizedAnswers,
         },
       );
       return _asMap(result);
+    } on PostgrestException catch (error) {
+      final missingRpc = error.code == '42883' ||
+          error.message.toLowerCase().contains('submit_topic_exam_attempt_secure_result');
+
+      if (!missingRpc) {
+        rethrow;
+      }
+    }
+
+    try {
+      await _supabase.rpc(
+        'submit_topic_exam_attempt_secure',
+        params: {
+          'p_exam_id': examId,
+          'p_answers': sanitizedAnswers,
+        },
+      );
+      return <String, dynamic>{};
     } on PostgrestException catch (error) {
       final missingRpc = error.code == '42883' ||
           error.message.toLowerCase().contains('submit_topic_exam_attempt_secure');
