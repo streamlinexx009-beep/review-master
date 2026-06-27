@@ -23,7 +23,7 @@ class GamificationRepositoryImpl implements GamificationRepository {
 
   @override
   Future<List<AchievementModel>> getAchievements() async {
-    final data = await client.from('achievements').select().order('points_required');
+    final data = await client.from('achievements').select().order('points');
 
     return data.map<AchievementModel>((e) => AchievementModel.fromMap(e)).toList();
   }
