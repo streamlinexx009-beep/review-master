@@ -14,6 +14,10 @@ abstract class SubjectRepository {
     String? description,
   });
 
+  Future<SubjectModel> joinSubjectByCode(
+    String code,
+  );
+
   Future<void> updateSubject(
     SubjectModel subject,
   );
