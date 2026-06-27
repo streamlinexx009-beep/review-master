@@ -49,6 +49,32 @@ class SubjectRepositoryImpl implements SubjectRepository {
   }
 
   @override
+  Future<SubjectModel> joinSubjectByCode(String code) async {
+    final cleanedCode = code.trim().replaceAll(RegExp(r'\s+'), '');
+
+    if (cleanedCode.isEmpty) {
+      throw Exception('Enter a subject code.');
+    }
+
+    final joined = await client
+        .rpc(
+          'join_subject_by_code',
+          params: {'p_join_code': cleanedCode},
+        )
+        .select()
+        .single();
+
+    final subjectId = joined['subject_id'] as String;
+    final subject = await getSubjectById(subjectId);
+
+    if (subject == null) {
+      throw Exception('Subject joined, but details could not be loaded.');
+    }
+
+    return subject;
+  }
+
+  @override
   Future<void> updateSubject(SubjectModel subject) async {
     await client.from('subjects').update(subject.toMap()).eq('id', subject.id);
   }
