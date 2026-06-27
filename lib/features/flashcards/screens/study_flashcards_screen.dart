@@ -54,7 +54,7 @@ class _StudyFlashcardsScreenState
         'reviewed_at':
             DateTime.now()
                 .toIso8601String(),
-      });
+      }, onConflict: 'student_id,flashcard_id');
     } catch (e) {
       debugPrint(
         'Review save error: $e',
