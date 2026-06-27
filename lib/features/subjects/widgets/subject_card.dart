@@ -14,74 +14,99 @@ class SubjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+      child: InkWell(
+        onTap: () => context.go('/subjects/${subject.id}'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primaryContainer,
-                borderRadius:
-                    BorderRadius.circular(
-                  16,
+              height: 116,
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFF7F64),
+                    Color(0xFFFF9A76),
+                  ],
                 ),
               ),
-              child: Icon(
-                Icons.menu_book,
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary,
-              ),
-            ),
-
-            const SizedBox(width: 16),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  Text(
-                    subject.name,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                  Positioned(
+                    right: -16,
+                    bottom: -24,
+                    child: Icon(
+                      Icons.school,
+                      color: Colors.white.withOpacity(0.18),
+                      size: 104,
+                    ),
                   ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    subject.description ??
-                        'No description available',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium,
-                    maxLines: 2,
-                    overflow:
-                        TextOverflow.ellipsis,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subject.description ?? 'No section',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(width: 16),
-
-            FilledButton.tonal(
-              onPressed: () {
-                context.go(
-                  '/subjects/${subject.id}/topics',
-                );
-              },
-              child: const Text(
-                'Open',
+            const Expanded(
+              child: ColoredBox(color: Colors.white),
+            ),
+            Container(
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    tooltip: 'Progress',
+                    onPressed: () {},
+                    icon: const Icon(Icons.trending_up),
+                  ),
+                  IconButton(
+                    tooltip: 'Materials',
+                    onPressed: () => context.go('/subjects/${subject.id}/materials'),
+                    icon: const Icon(Icons.folder_outlined),
+                  ),
+                  IconButton(
+                    tooltip: 'More',
+                    onPressed: () => context.go('/subjects/${subject.id}'),
+                    icon: const Icon(Icons.more_vert),
+                  ),
+                ],
               ),
             ),
           ],
