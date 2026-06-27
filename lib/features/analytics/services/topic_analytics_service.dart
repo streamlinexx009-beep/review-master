@@ -36,7 +36,7 @@ class TopicAnalyticsService {
               as int;
 
       final percentage =
-          (score / total) * 100;
+          total == 0 ? 0.0 : (score / total) * 100;
 
       final topic =
           item['topics']['name']
