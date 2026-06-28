@@ -14,11 +14,12 @@ class StudentDashboardScreen extends StatelessWidget {
         final role = snapshot.data;
         final isTeacher = role == 'instructor' || role == 'admin';
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1240),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 26),
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1240),
               child: _DashboardHero(isTeacher: isTeacher),
             ),
           ),
