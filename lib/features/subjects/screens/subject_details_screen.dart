@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/subject_provider.dart';
 
@@ -290,7 +291,7 @@ class _LearningTab extends StatelessWidget {
         children: [
           _SectionIntro(
             title: 'Learning',
-            subtitle: 'Choose one activity to prepare or review. Each card has a clear action for teachers and students.',
+            subtitle: 'Choose one activity to prepare or review. Use Create for manual work or AI Generate for assisted drafting.',
             icon: Icons.auto_stories_outlined,
             color: const Color(0xFF0EA5E9),
             trailing: FilledButton.icon(
@@ -311,7 +312,7 @@ class _LearningTab extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 24,
                 mainAxisSpacing: 24,
-                childAspectRatio: constraints.maxWidth < 820 ? 2.2 : 2.35,
+                childAspectRatio: constraints.maxWidth < 820 ? 2.05 : 2.08,
                 children: [
                   _LearningActionCard(
                     title: 'Learning Files',
@@ -326,21 +327,29 @@ class _LearningTab extends StatelessWidget {
                   ),
                   _LearningActionCard(
                     title: 'Review Cards',
-                    shortLabel: 'Quick review',
-                    description: 'Terms, definitions, formulas, and short recall practice.',
+                    shortLabel: 'Flashcards',
+                    description: 'Create manual flashcards or let AI draft random cards for teacher review.',
                     icon: Icons.style_outlined,
                     color: const Color(0xFF8B5CF6),
                     primaryLabel: 'Open Cards',
                     onPrimary: () => context.go('/flashcards'),
+                    secondaryLabel: 'Create Card',
+                    onSecondary: () => _showCreateFlashcardDialog(context, subjectId),
+                    tertiaryLabel: 'AI Generate',
+                    onTertiary: () => context.go('/subjects/$subjectId/ai-tools'),
                   ),
                   _LearningActionCard(
                     title: 'Tests',
-                    shortLabel: 'Quizzes and exams',
-                    description: 'Create assessments and let students answer them online.',
+                    shortLabel: 'Exams and quizzes',
+                    description: 'Create a test manually or use AI to draft questions before saving.',
                     icon: Icons.quiz_outlined,
                     color: const Color(0xFFF97316),
                     primaryLabel: 'Open Tests',
                     onPrimary: () => context.go('/exams'),
+                    secondaryLabel: 'Create Test',
+                    onSecondary: () => context.go('/create-exam'),
+                    tertiaryLabel: 'AI Generate',
+                    onTertiary: () => context.go('/subjects/$subjectId/ai-tools'),
                   ),
                   _LearningActionCard(
                     title: 'Scores',
@@ -357,6 +366,13 @@ class _LearningTab extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCreateFlashcardDialog(BuildContext context, String subjectId) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _CreateFlashcardDialog(subjectId: subjectId),
     );
   }
 }
@@ -503,6 +519,8 @@ class _LearningActionCard extends StatelessWidget {
   final VoidCallback onPrimary;
   final String? secondaryLabel;
   final VoidCallback? onSecondary;
+  final String? tertiaryLabel;
+  final VoidCallback? onTertiary;
 
   const _LearningActionCard({
     required this.title,
@@ -514,6 +532,8 @@ class _LearningActionCard extends StatelessWidget {
     required this.onPrimary,
     this.secondaryLabel,
     this.onSecondary,
+    this.tertiaryLabel,
+    this.onTertiary,
   });
 
   @override
@@ -525,7 +545,7 @@ class _LearningActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         onTap: onPrimary,
         child: Padding(
-          padding: const EdgeInsets.all(26),
+          padding: const EdgeInsets.all(24),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -552,14 +572,16 @@ class _LearningActionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Expanded(child: Text(description, style: const TextStyle(color: Color(0xFF64748B), height: 1.45))),
-                    const SizedBox(height: 18),
-                    Row(
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
                       children: [
-                        SizedBox(width: 132, child: FilledButton(onPressed: onPrimary, child: Text(primaryLabel))),
-                        if (secondaryLabel != null && onSecondary != null) ...[
-                          const SizedBox(width: 12),
-                          SizedBox(width: 132, child: OutlinedButton(onPressed: onSecondary, child: Text(secondaryLabel!))),
-                        ],
+                        SizedBox(width: 118, child: FilledButton(onPressed: onPrimary, child: Text(primaryLabel, textAlign: TextAlign.center))),
+                        if (secondaryLabel != null && onSecondary != null)
+                          SizedBox(width: 118, child: OutlinedButton(onPressed: onSecondary, child: Text(secondaryLabel!, textAlign: TextAlign.center))),
+                        if (tertiaryLabel != null && onTertiary != null)
+                          SizedBox(width: 124, child: OutlinedButton.icon(onPressed: onTertiary, icon: const Icon(Icons.auto_awesome_rounded, size: 16), label: Text(tertiaryLabel!, textAlign: TextAlign.center))),
                       ],
                     ),
                   ],
@@ -569,6 +591,106 @@ class _LearningActionCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CreateFlashcardDialog extends StatefulWidget {
+  final String subjectId;
+
+  const _CreateFlashcardDialog({required this.subjectId});
+
+  @override
+  State<_CreateFlashcardDialog> createState() => _CreateFlashcardDialogState();
+}
+
+class _CreateFlashcardDialogState extends State<_CreateFlashcardDialog> {
+  final frontController = TextEditingController();
+  final backController = TextEditingController();
+  bool saving = false;
+
+  @override
+  void dispose() {
+    frontController.dispose();
+    backController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final front = frontController.text.trim();
+    final back = backController.text.trim();
+
+    if (front.isEmpty || back.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter both front and back text.')));
+      return;
+    }
+
+    setState(() => saving = true);
+
+    try {
+      final client = Supabase.instance.client;
+      final user = client.auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await client.from('flashcards').insert({
+        'subject_id': widget.subjectId,
+        'front_text': front,
+        'back_text': back,
+        'created_by': user.id,
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Flashcard created.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
+
+    if (mounted) setState(() => saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Flashcard'),
+      content: SizedBox(
+        width: 460,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: frontController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Front',
+                hintText: 'Question, term, or concept',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: backController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Back',
+                hintText: 'Answer or explanation',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: saving ? null : () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton.icon(
+          onPressed: saving ? null : _save,
+          icon: saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.check_rounded),
+          label: Text(saving ? 'Saving...' : 'Save Flashcard'),
+        ),
+      ],
     );
   }
 }
