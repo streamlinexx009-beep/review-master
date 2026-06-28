@@ -37,37 +37,7 @@ class SubjectDetailsScreen extends ConsumerWidget {
                       name: data.name,
                       description: data.description,
                     ),
-                    const SizedBox(height: 28),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x080F172A),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        child: TabBar(
-                          labelColor: Color(0xFF0F766E),
-                          unselectedLabelColor: Color(0xFF64748B),
-                          indicatorColor: Color(0xFF0F766E),
-                          indicatorSize: TabBarIndicatorSize.label,
-                          tabs: [
-                            Tab(icon: Icon(Icons.campaign_outlined), text: 'Class Feed'),
-                            Tab(icon: Icon(Icons.auto_stories_outlined), text: 'Learning'),
-                            Tab(icon: Icon(Icons.people_outline), text: 'Students'),
-                            Tab(icon: Icon(Icons.assessment_outlined), text: 'Scores'),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 30),
                     Expanded(
                       child: TabBarView(
                         children: [
@@ -99,7 +69,7 @@ class _ClassHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 30),
+      padding: const EdgeInsets.fromLTRB(32, 30, 32, 24),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         gradient: const LinearGradient(
@@ -119,7 +89,7 @@ class _ClassHeader extends StatelessWidget {
         children: [
           Positioned(
             right: -16,
-            bottom: -40,
+            top: 24,
             child: Icon(
               Icons.school_rounded,
               color: Colors.white.withOpacity(0.12),
@@ -170,6 +140,38 @@ class _ClassHeader extends StatelessWidget {
                 child: const Text(
                   'Start with one tab below: post updates, add learning activities, view students, or check scores.',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.35),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.55)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x180F172A),
+                      blurRadius: 18,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: TabBar(
+                    labelColor: Color(0xFF0F766E),
+                    unselectedLabelColor: Color(0xFF64748B),
+                    indicatorColor: Color(0xFF0F766E),
+                    indicatorSize: TabBarIndicatorSize.label,
+                    dividerColor: Colors.transparent,
+                    tabs: [
+                      Tab(icon: Icon(Icons.campaign_outlined), text: 'Class Feed'),
+                      Tab(icon: Icon(Icons.auto_stories_outlined), text: 'Learning'),
+                      Tab(icon: Icon(Icons.people_outline), text: 'Students'),
+                      Tab(icon: Icon(Icons.assessment_outlined), text: 'Scores'),
+                    ],
+                  ),
                 ),
               ),
             ],
