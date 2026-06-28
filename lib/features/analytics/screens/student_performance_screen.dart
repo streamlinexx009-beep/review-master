@@ -69,7 +69,7 @@ class _StudentPerformanceScreenState extends ConsumerState<StudentPerformanceScr
                       const SizedBox(height: 16),
                       SizedBox(height: 390, child: studentsPanel),
                       const SizedBox(height: 16),
-                      SizedBox(height: 560, child: progressPanel),
+                      SizedBox(height: 680, child: progressPanel),
                     ],
                   );
                 }
@@ -97,7 +97,10 @@ class _PerformanceHeader extends StatelessWidget {
   final String? selectedSubjectName;
   final String? selectedStudentName;
 
-  const _PerformanceHeader({required this.selectedSubjectName, required this.selectedStudentName});
+  const _PerformanceHeader({
+    required this.selectedSubjectName,
+    required this.selectedStudentName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -407,8 +410,8 @@ class _StudentProgressPanel extends StatelessWidget {
     }
 
     return _PanelCard(
-      title: studentName ?? 'Student Progress',
-      subtitle: subjectName ?? 'Subject performance',
+      title: '3. Progress Monitor',
+      subtitle: 'Clear analysis of the selected student.',
       child: FutureBuilder<_StudentProgressData>(
         future: _loadProgress(subjectId: subjectId!, studentId: studentId!),
         builder: (context, snapshot) {
@@ -429,61 +432,319 @@ class _StudentProgressPanel extends StatelessWidget {
             rows: [],
           );
 
+          final level = _PerformanceLevel.fromData(data);
+
           return ListView(
             children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final count = constraints.maxWidth < 720 ? 2 : 4;
-                  return GridView.count(
-                    crossAxisCount: count,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.25,
-                    children: [
-                      _MiniStat(title: 'Attempts', value: '${data.attempts}', icon: Icons.assignment_outlined, color: const Color(0xFF0EA5E9)),
-                      _MiniStat(title: 'Average', value: '${data.averageScore.toStringAsFixed(0)}%', icon: Icons.trending_up, color: const Color(0xFF8B5CF6)),
-                      _MiniStat(title: 'Best', value: '${data.bestScore.toStringAsFixed(0)}%', icon: Icons.emoji_events_outlined, color: const Color(0xFFF97316)),
-                      _MiniStat(title: 'Passed', value: '${data.passed}', icon: Icons.check_circle_outline, color: const Color(0xFF10B981)),
-                    ],
-                  );
-                },
+              _StudentAnalysisHeader(
+                studentName: studentName ?? 'Selected student',
+                subjectName: subjectName ?? 'Selected subject',
+                level: level,
               ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(child: Text('Exam Performance', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))),
-                  _StatusPill(icon: Icons.close_rounded, label: '${data.failed} failed'),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (data.rows.isEmpty)
-                const _EmptyHint(icon: Icons.fact_check_outlined, message: 'No exam attempts yet for this subject.')
-              else
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                    columns: const [
-                      DataColumn(label: Text('Exam')),
-                      DataColumn(label: Text('Score')),
-                      DataColumn(label: Text('Status')),
-                    ],
-                    rows: data.rows.map((row) {
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(row.title)),
-                          DataCell(Text('${row.score.toStringAsFixed(0)}%')),
-                          DataCell(_ResultBadge(passed: row.passed)),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+              const SizedBox(height: 16),
+              if (data.attempts == 0)
+                const _NoExamDataCard()
+              else ...[
+                _OverallAnalysisCard(data: data, level: level),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final count = constraints.maxWidth < 720 ? 2 : 4;
+                    return GridView.count(
+                      crossAxisCount: count,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.15,
+                      children: [
+                        _MiniStat(
+                          title: 'Attempts',
+                          value: '${data.attempts}',
+                          helper: 'exam records',
+                          icon: Icons.assignment_outlined,
+                          color: const Color(0xFF0EA5E9),
+                        ),
+                        _MiniStat(
+                          title: 'Average',
+                          value: '${data.averageScore.toStringAsFixed(0)}%',
+                          helper: 'overall score',
+                          icon: Icons.trending_up,
+                          color: const Color(0xFF8B5CF6),
+                        ),
+                        _MiniStat(
+                          title: 'Pass Rate',
+                          value: '${data.passRate.toStringAsFixed(0)}%',
+                          helper: '${data.passed} of ${data.attempts} passed',
+                          icon: Icons.check_circle_outline,
+                          color: const Color(0xFF10B981),
+                        ),
+                        _MiniStat(
+                          title: 'Best Score',
+                          value: '${data.bestScore.toStringAsFixed(0)}%',
+                          helper: 'highest result',
+                          icon: Icons.emoji_events_outlined,
+                          color: const Color(0xFFF97316),
+                        ),
+                      ],
+                    );
+                  },
                 ),
+                const SizedBox(height: 16),
+                _TeacherActionCard(level: level),
+                const SizedBox(height: 16),
+                _ExamHistoryCard(rows: data.rows),
+              ],
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _StudentAnalysisHeader extends StatelessWidget {
+  final String studentName;
+  final String subjectName;
+  final _PerformanceLevel level;
+
+  const _StudentAnalysisHeader({
+    required this.studentName,
+    required this.subjectName,
+    required this.level,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: level.color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: level.color.withOpacity(0.25)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.white,
+            child: Icon(level.icon, color: level.color),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  studentName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 4),
+                Text(subjectName, style: const TextStyle(color: Color(0xFF64748B))),
+              ],
+            ),
+          ),
+          _LevelBadge(level: level),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverallAnalysisCard extends StatelessWidget {
+  final _StudentProgressData data;
+  final _PerformanceLevel level;
+
+  const _OverallAnalysisCard({required this.data, required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final averageValue = (data.averageScore.clamp(0, 100) / 100).toDouble();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.psychology_alt_outlined, color: level.color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'What this means',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(level.explanation, style: const TextStyle(color: Color(0xFF475569), height: 1.45)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Average score', style: TextStyle(fontWeight: FontWeight.w800)),
+              Text('${data.averageScore.toStringAsFixed(0)}%', style: TextStyle(color: level.color, fontWeight: FontWeight.w900)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: averageValue,
+              minHeight: 10,
+              backgroundColor: const Color(0xFFE2E8F0),
+              valueColor: AlwaysStoppedAnimation<Color>(level.color),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('0%', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+              Text('Passing target: 75%', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w700)),
+              Text('100%', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoExamDataCard extends StatelessWidget {
+  const _NoExamDataCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        children: [
+          const CircleAvatar(
+            radius: 30,
+            backgroundColor: Color(0xFFFEF3C7),
+            child: Icon(Icons.info_outline_rounded, color: Color(0xFFD97706)),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'No exam records yet',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'This student is enrolled, but there are no exam attempts for this subject yet. Performance analysis will appear after the student takes an exam.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF92400E), height: 1.45),
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: const [
+              _SimpleSuggestion(icon: Icons.quiz_outlined, text: 'Create or publish an exam'),
+              _SimpleSuggestion(icon: Icons.notifications_active_outlined, text: 'Remind the student to take it'),
+              _SimpleSuggestion(icon: Icons.update_outlined, text: 'Check again after submission'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TeacherActionCard extends StatelessWidget {
+  final _PerformanceLevel level;
+
+  const _TeacherActionCard({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: level.color.withOpacity(0.12),
+            child: Icon(Icons.lightbulb_outline_rounded, color: level.color),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Recommended teacher action', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                const SizedBox(height: 6),
+                Text(level.recommendation, style: const TextStyle(color: Color(0xFF475569), height: 1.45)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExamHistoryCard extends StatelessWidget {
+  final List<_AttemptRow> rows;
+
+  const _ExamHistoryCard({required this.rows});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Exam history', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+              columns: const [
+                DataColumn(label: Text('Exam')),
+                DataColumn(label: Text('Score')),
+                DataColumn(label: Text('Status')),
+              ],
+              rows: rows.map((row) {
+                return DataRow(
+                  cells: [
+                    DataCell(Text(row.title)),
+                    DataCell(Text('${row.score.toStringAsFixed(0)}%')),
+                    DataCell(_ResultBadge(passed: row.passed)),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -577,10 +838,17 @@ class _SelectableTile extends StatelessWidget {
 class _MiniStat extends StatelessWidget {
   final String title;
   final String value;
+  final String helper;
   final IconData icon;
   final Color color;
 
-  const _MiniStat({required this.title, required this.value, required this.icon, required this.color});
+  const _MiniStat({
+    required this.title,
+    required this.value,
+    required this.helper,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -597,7 +865,9 @@ class _MiniStat extends StatelessWidget {
           Icon(icon, color: color),
           const Spacer(),
           Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-          Text(title, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+          Text(title, style: const TextStyle(color: Color(0xFF0F172A), fontSize: 12, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 2),
+          Text(helper, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
         ],
       ),
     );
@@ -631,6 +901,28 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
+class _LevelBadge extends StatelessWidget {
+  final _PerformanceLevel level;
+
+  const _LevelBadge({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: level.color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: level.color.withOpacity(0.25)),
+      ),
+      child: Text(
+        level.label,
+        style: TextStyle(color: level.color, fontWeight: FontWeight.w900, fontSize: 12),
+      ),
+    );
+  }
+}
+
 class _ResultBadge extends StatelessWidget {
   final bool passed;
 
@@ -648,6 +940,32 @@ class _ResultBadge extends StatelessWidget {
       child: Text(
         passed ? 'Passed' : 'Failed',
         style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12),
+      ),
+    );
+  }
+}
+
+class _SimpleSuggestion extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _SimpleSuggestion({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.70),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: const Color(0xFFD97706)),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
+        ],
       ),
     );
   }
@@ -725,6 +1043,8 @@ class _StudentProgressData {
     required this.failed,
     required this.rows,
   });
+
+  double get passRate => attempts == 0 ? 0 : (passed / attempts) * 100;
 }
 
 class _AttemptRow {
@@ -733,4 +1053,70 @@ class _AttemptRow {
   final bool passed;
 
   const _AttemptRow({required this.title, required this.score, required this.passed});
+}
+
+class _PerformanceLevel {
+  final String label;
+  final String explanation;
+  final String recommendation;
+  final Color color;
+  final IconData icon;
+
+  const _PerformanceLevel({
+    required this.label,
+    required this.explanation,
+    required this.recommendation,
+    required this.color,
+    required this.icon,
+  });
+
+  factory _PerformanceLevel.fromData(_StudentProgressData data) {
+    if (data.attempts == 0) {
+      return const _PerformanceLevel(
+        label: 'No Data Yet',
+        explanation: 'There are no exam attempts yet, so the system cannot calculate performance trends.',
+        recommendation: 'Assign an exam or remind the student to take the available assessment before making performance conclusions.',
+        color: Color(0xFFD97706),
+        icon: Icons.info_outline_rounded,
+      );
+    }
+
+    if (data.averageScore >= 85 && data.passRate >= 80) {
+      return const _PerformanceLevel(
+        label: 'Excellent',
+        explanation: 'The student is performing strongly in this subject. Scores and pass rate show consistent mastery.',
+        recommendation: 'Give enrichment tasks, advanced practice, or leadership opportunities such as peer tutoring.',
+        color: Color(0xFF10B981),
+        icon: Icons.verified_rounded,
+      );
+    }
+
+    if (data.averageScore >= 75 && data.passRate >= 60) {
+      return const _PerformanceLevel(
+        label: 'On Track',
+        explanation: 'The student is generally meeting expectations, but there may still be room to strengthen weaker topics.',
+        recommendation: 'Continue regular practice and review the exam history to identify any topic that needs reinforcement.',
+        color: Color(0xFF0EA5E9),
+        icon: Icons.trending_up_rounded,
+      );
+    }
+
+    if (data.averageScore >= 60) {
+      return const _PerformanceLevel(
+        label: 'Needs Support',
+        explanation: 'The student has partial understanding but may struggle with some assessments or topics.',
+        recommendation: 'Schedule a short intervention, provide targeted review materials, and monitor the next exam result closely.',
+        color: Color(0xFFF97316),
+        icon: Icons.support_agent_rounded,
+      );
+    }
+
+    return const _PerformanceLevel(
+      label: 'At Risk',
+      explanation: 'The student is below the expected performance level and may need immediate academic support.',
+      recommendation: 'Contact the student, review difficult topics, assign remediation activities, and consider a follow-up assessment.',
+      color: Color(0xFFEF4444),
+      icon: Icons.warning_amber_rounded,
+    );
+  }
 }
