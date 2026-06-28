@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 
 import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/ai/screens/ai_teacher_tools_screen.dart';
 import '../../features/analytics/screens/student_performance_screen.dart';
 import '../../features/analytics/screens/topic_performance_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
@@ -146,6 +147,7 @@ final appRouter = GoRouter(
         GoRoute(path: '/subjects', builder: (context, state) => const SubjectsScreen()),
         GoRoute(path: '/create-subject', builder: (context, state) => const CreateSubjectScreen()),
         GoRoute(path: '/subjects/:id', builder: (context, state) => SubjectDetailsScreen(subjectId: state.pathParameters['id']!)),
+        GoRoute(path: '/subjects/:id/ai-tools', builder: (context, state) => AiTeacherToolsScreen(subjectId: state.pathParameters['id']!)),
         GoRoute(path: '/subjects/:id/topics', builder: (context, state) => TopicsScreen(subjectId: state.pathParameters['id']!)),
         GoRoute(path: '/subjects/:id/materials', builder: (context, state) => SubjectMaterialsScreen(subjectId: state.pathParameters['id']!)),
         GoRoute(path: '/subjects/:id/upload-material', builder: (context, state) => UploadMaterialScreen(subjectId: state.pathParameters['id']!)),
