@@ -45,29 +45,9 @@ class GoogleShell extends StatelessWidget {
                 label: Text('Subjects'),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.description_outlined),
-                selectedIcon: Icon(Icons.description),
-                label: Text('Materials'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.style_outlined),
-                selectedIcon: Icon(Icons.style),
-                label: Text('Flashcards'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.quiz_outlined),
-                selectedIcon: Icon(Icons.quiz),
-                label: Text('Exams'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.assessment_outlined),
-                selectedIcon: Icon(Icons.assessment),
-                label: Text('Results'),
-              ),
-              NavigationRailDestination(
                 icon: Icon(Icons.analytics_outlined),
                 selectedIcon: Icon(Icons.analytics),
-                label: Text('Analytics'),
+                label: Text('Student Performance'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.event_note_outlined),
@@ -127,7 +107,7 @@ class GoogleTopBar extends StatelessWidget {
               height: 48,
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search materials, flashcards, exams...',
+                  hintText: 'Search classes, exams, reports...',
                   prefixIcon: const Icon(Icons.search),
                 ),
               ),
