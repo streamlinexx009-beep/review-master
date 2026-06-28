@@ -26,91 +26,178 @@ class SubjectDetailsScreen extends ConsumerWidget {
 
         return DefaultTabController(
           length: 4,
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFFFF7F64), Color(0xFFFF9A76)],
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x2214B8A6),
+                        blurRadius: 24,
+                        offset: Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -24,
+                        bottom: -42,
+                        child: Icon(
+                          Icons.school_rounded,
+                          color: Colors.white.withOpacity(0.12),
+                          size: 170,
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                                child: const Text(
+                                  'Subject Classroom',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            data.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 34,
+                              height: 1.1,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            data.description ?? 'No section details yet',
+                            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
+                          ),
+                          const SizedBox(height: 22),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              _HeroAction(
+                                icon: Icons.folder_outlined,
+                                label: 'Materials',
+                                onTap: () => context.go('/subjects/$subjectId/materials'),
+                              ),
+                              _HeroAction(
+                                icon: Icons.style_outlined,
+                                label: 'Flashcards',
+                                onTap: () => context.go('/flashcards'),
+                              ),
+                              _HeroAction(
+                                icon: Icons.quiz_outlined,
+                                label: 'Exams',
+                                onTap: () => context.go('/exams'),
+                              ),
+                              _HeroAction(
+                                icon: Icons.assessment_outlined,
+                                label: 'Results',
+                                onTap: () => context.go('/results'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      data.description ?? 'No section',
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                    const SizedBox(height: 20),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        FilledButton.tonalIcon(
-                          onPressed: () => context.go('/subjects/$subjectId/materials'),
-                          icon: const Icon(Icons.folder_outlined),
-                          label: const Text('Materials'),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: () => context.go('/flashcards'),
-                          icon: const Icon(Icons.style_outlined),
-                          label: const Text('Flashcards'),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: () => context.go('/exams'),
-                          icon: const Icon(Icons.quiz_outlined),
-                          label: const Text('Exams'),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: () => context.go('/results'),
-                          icon: const Icon(Icons.assessment_outlined),
-                          label: const Text('Results'),
-                        ),
-                      ],
-                    ),
-                  ],
+                const SizedBox(height: 18),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const TabBar(
+                    labelColor: Color(0xFF0F766E),
+                    unselectedLabelColor: Color(0xFF64748B),
+                    indicatorColor: Color(0xFF0F766E),
+                    tabs: [
+                      Tab(text: 'Stream'),
+                      Tab(text: 'Modules'),
+                      Tab(text: 'People'),
+                      Tab(text: 'Results'),
+                    ],
+                  ),
                 ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: TabBar(
-                  tabs: [
-                    Tab(text: 'Stream'),
-                    Tab(text: 'Modules'),
-                    Tab(text: 'People'),
-                    Tab(text: 'Results'),
-                  ],
+                const SizedBox(height: 18),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _StreamTab(subjectId: subjectId),
+                      _ModulesTab(subjectId: subjectId),
+                      const _PeopleTab(),
+                      const _ResultsTab(),
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    _StreamTab(subjectId: subjectId),
-                    _ModulesTab(subjectId: subjectId),
-                    const _PeopleTab(),
-                    const _ResultsTab(),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _HeroAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _HeroAction({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.18),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -123,26 +210,36 @@ class _StreamTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(24),
       children: [
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: Theme.of(context).dividerColor),
-          ),
-          child: const Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('Announce something to your class'),
+        _ModernCard(
+          child: Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0xFFCCFBF1),
+                child: Icon(Icons.campaign_rounded, color: Color(0xFF0F766E)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Announce something to your class', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 4),
+                    const Text('Post reminders, announcements, or learning updates here.'),
+                  ],
+                ),
+              ),
+              FilledButton(onPressed: () {}, child: const Text('Post')),
+            ],
           ),
         ),
-        const SizedBox(height: 18),
-        Card(
-          elevation: 0,
+        const SizedBox(height: 16),
+        _ModernCard(
           child: ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.school)),
+            contentPadding: EdgeInsets.zero,
+            leading: const CircleAvatar(child: Icon(Icons.school_rounded)),
             title: const Text('Welcome to your class stream'),
-            subtitle: const Text('Announcements and updates will appear here.'),
+            subtitle: const Text('Class announcements and updates will appear here.'),
           ),
         ),
       ],
@@ -158,18 +255,27 @@ class _ModulesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          'Subject Module',
-          style: Theme.of(context).textTheme.headlineSmall,
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Subject Modules', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  const Text('Everything students need for this subject is grouped here.'),
+                ],
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () => context.go('/subjects/$subjectId/topics'),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Create topic'),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Materials, flashcards, exams, and results are now accessed from inside this subject.',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         LayoutBuilder(
           builder: (context, constraints) {
             var count = 4;
@@ -182,52 +288,56 @@ class _ModulesTab extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 1.35,
+              childAspectRatio: 1.2,
               children: [
                 _ModuleCard(
                   title: 'Materials',
-                  subtitle: 'PDFs, notes, and learning resources',
+                  subtitle: 'Upload PDFs, handouts, and learning files.',
                   icon: Icons.folder_outlined,
+                  color: const Color(0xFF0EA5E9),
                   onTap: () => context.go('/subjects/$subjectId/materials'),
                 ),
                 _ModuleCard(
                   title: 'Flashcards',
-                  subtitle: 'Review key terms and concepts',
+                  subtitle: 'Help students review key terms quickly.',
                   icon: Icons.style_outlined,
+                  color: const Color(0xFF8B5CF6),
                   onTap: () => context.go('/flashcards'),
                 ),
                 _ModuleCard(
                   title: 'Exams',
-                  subtitle: 'Create and manage assessments',
+                  subtitle: 'Create, publish, and manage assessments.',
                   icon: Icons.quiz_outlined,
+                  color: const Color(0xFFF97316),
                   onTap: () => context.go('/exams'),
                 ),
                 _ModuleCard(
                   title: 'Results',
-                  subtitle: 'Scores and class performance records',
+                  subtitle: 'Review scores and assessment outcomes.',
                   icon: Icons.assessment_outlined,
+                  color: const Color(0xFF10B981),
                   onTap: () => context.go('/results'),
                 ),
               ],
             );
           },
         ),
-        const SizedBox(height: 24),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            FilledButton.icon(
-              onPressed: () => context.go('/subjects/$subjectId/topics'),
-              icon: const Icon(Icons.add),
-              label: const Text('Create topic'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.go('/subjects/$subjectId/upload-material'),
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Upload material'),
-            ),
-          ],
+        const SizedBox(height: 20),
+        _ModernCard(
+          child: Row(
+            children: [
+              const CircleAvatar(child: Icon(Icons.upload_file_rounded)),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text('Need to add a handout or lecture PDF? Upload learning material directly to this subject.'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/subjects/$subjectId/upload-material'),
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Upload material'),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -238,12 +348,14 @@ class _ModuleCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   const _ModuleCard({
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.color,
     required this.onTap,
   });
 
@@ -252,27 +364,30 @@ class _ModuleCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                child: Icon(icon),
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(icon, color: color),
               ),
               const Spacer(),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
-              Text(subtitle),
+              Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), height: 1.35)),
             ],
           ),
         ),
@@ -287,12 +402,13 @@ class _PeopleTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(24),
       children: const [
-        ListTile(
-          leading: Icon(Icons.people_outline),
-          title: Text('People'),
-          subtitle: Text('Teachers and students will be listed here.'),
+        _ModernCard(
+          child: ListTile(
+            leading: Icon(Icons.people_outline),
+            title: Text('People'),
+            subtitle: Text('Teachers and enrolled students will be listed here.'),
+          ),
         ),
       ],
     );
@@ -305,14 +421,36 @@ class _ResultsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(24),
       children: const [
-        ListTile(
-          leading: Icon(Icons.grade_outlined),
-          title: Text('Results'),
-          subtitle: Text('Student scores and performance will appear here.'),
+        _ModernCard(
+          child: ListTile(
+            leading: Icon(Icons.grade_outlined),
+            title: Text('Results'),
+            subtitle: Text('Student scores and subject performance summaries will appear here.'),
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _ModernCard extends StatelessWidget {
+  final Widget child;
+
+  const _ModernCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: child,
+      ),
     );
   }
 }
