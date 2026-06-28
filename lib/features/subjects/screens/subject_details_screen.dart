@@ -59,6 +59,7 @@ class SubjectDetailsScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     Wrap(
                       spacing: 12,
+                      runSpacing: 12,
                       children: [
                         FilledButton.tonalIcon(
                           onPressed: () => context.go('/subjects/$subjectId/materials'),
@@ -66,9 +67,19 @@ class SubjectDetailsScreen extends ConsumerWidget {
                           label: const Text('Materials'),
                         ),
                         FilledButton.tonalIcon(
-                          onPressed: () => context.go('/subjects/$subjectId/topics'),
-                          icon: const Icon(Icons.assignment_outlined),
-                          label: const Text('Classwork'),
+                          onPressed: () => context.go('/flashcards'),
+                          icon: const Icon(Icons.style_outlined),
+                          label: const Text('Flashcards'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () => context.go('/exams'),
+                          icon: const Icon(Icons.quiz_outlined),
+                          label: const Text('Exams'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () => context.go('/results'),
+                          icon: const Icon(Icons.assessment_outlined),
+                          label: const Text('Results'),
                         ),
                       ],
                     ),
@@ -80,9 +91,9 @@ class SubjectDetailsScreen extends ConsumerWidget {
                 child: TabBar(
                   tabs: [
                     Tab(text: 'Stream'),
-                    Tab(text: 'Classwork'),
+                    Tab(text: 'Modules'),
                     Tab(text: 'People'),
-                    Tab(text: 'Grades'),
+                    Tab(text: 'Results'),
                   ],
                 ),
               ),
@@ -90,9 +101,9 @@ class SubjectDetailsScreen extends ConsumerWidget {
                 child: TabBarView(
                   children: [
                     _StreamTab(subjectId: subjectId),
-                    _ClassworkTab(subjectId: subjectId),
+                    _ModulesTab(subjectId: subjectId),
                     const _PeopleTab(),
-                    const _GradesTab(),
+                    const _ResultsTab(),
                   ],
                 ),
               ),
@@ -139,16 +150,69 @@ class _StreamTab extends StatelessWidget {
   }
 }
 
-class _ClassworkTab extends StatelessWidget {
+class _ModulesTab extends StatelessWidget {
   final String subjectId;
 
-  const _ClassworkTab({required this.subjectId});
+  const _ModulesTab({required this.subjectId});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
+        Text(
+          'Subject Module',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Materials, flashcards, exams, and results are now accessed from inside this subject.',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            var count = 4;
+            if (constraints.maxWidth < 1100) count = 2;
+            if (constraints.maxWidth < 650) count = 1;
+
+            return GridView.count(
+              crossAxisCount: count,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.35,
+              children: [
+                _ModuleCard(
+                  title: 'Materials',
+                  subtitle: 'PDFs, notes, and learning resources',
+                  icon: Icons.folder_outlined,
+                  onTap: () => context.go('/subjects/$subjectId/materials'),
+                ),
+                _ModuleCard(
+                  title: 'Flashcards',
+                  subtitle: 'Review key terms and concepts',
+                  icon: Icons.style_outlined,
+                  onTap: () => context.go('/flashcards'),
+                ),
+                _ModuleCard(
+                  title: 'Exams',
+                  subtitle: 'Create and manage assessments',
+                  icon: Icons.quiz_outlined,
+                  onTap: () => context.go('/exams'),
+                ),
+                _ModuleCard(
+                  title: 'Results',
+                  subtitle: 'Scores and class performance records',
+                  icon: Icons.assessment_outlined,
+                  onTap: () => context.go('/results'),
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 24),
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -165,16 +229,54 @@ class _ClassworkTab extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        const Card(
-          elevation: 0,
-          child: ListTile(
-            leading: Icon(Icons.assignment_outlined),
-            title: Text('Classwork will appear here'),
-            subtitle: Text('Add topics, learning materials, quizzes, and exams.'),
+      ],
+    );
+  }
+}
+
+class _ModuleCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ModuleCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Theme.of(context).dividerColor),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                child: Icon(icon),
+              ),
+              const Spacer(),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 6),
+              Text(subtitle),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -197,8 +299,8 @@ class _PeopleTab extends StatelessWidget {
   }
 }
 
-class _GradesTab extends StatelessWidget {
-  const _GradesTab();
+class _ResultsTab extends StatelessWidget {
+  const _ResultsTab();
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +309,7 @@ class _GradesTab extends StatelessWidget {
       children: const [
         ListTile(
           leading: Icon(Icons.grade_outlined),
-          title: Text('Grades'),
+          title: Text('Results'),
           subtitle: Text('Student scores and performance will appear here.'),
         ),
       ],
