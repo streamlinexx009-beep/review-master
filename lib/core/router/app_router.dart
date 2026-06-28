@@ -52,12 +52,11 @@ int _getIndexFromLocation(String location) {
       location.startsWith('/take-exam') ||
       location.startsWith('/take-topic-exam') ||
       location.startsWith('/create-question') ||
-      location.startsWith('/results') ||
       location.startsWith('/topics')) {
     return 1;
   }
 
-  if (location.startsWith('/analytics') || location.startsWith('/topic-performance')) return 2;
+  if (location.startsWith('/analytics') || location.startsWith('/results') || location.startsWith('/topic-performance')) return 2;
   if (location.startsWith('/study-planner')) return 3;
   if (location.startsWith('/batches')) return 4;
   return 0;
@@ -95,6 +94,19 @@ void _goToShellDestination(BuildContext context, int index) {
   }
 }
 
+bool _studentRouteRestricted(String location) {
+  return location.startsWith('/admin') ||
+      location.startsWith('/instructor') ||
+      location.startsWith('/analytics') ||
+      location.startsWith('/topic-performance') ||
+      location.startsWith('/batches') ||
+      location.startsWith('/create-subject') ||
+      location.startsWith('/create-exam') ||
+      location.startsWith('/create-question') ||
+      location.contains('/ai-tools') ||
+      location.contains('/upload-material');
+}
+
 final appRouter = GoRouter(
   initialLocation: '/',
   errorBuilder: (context, state) => _routeErrorScreen(
@@ -114,16 +126,14 @@ final appRouter = GoRouter(
         case 'admin':
           return '/admin';
         case 'instructor':
-          return '/subjects';
         case 'student':
         default:
           return '/dashboard';
       }
     }
 
-    if (role == 'student' && state.matchedLocation.startsWith('/admin')) return '/dashboard';
-    if (role == 'student' && state.matchedLocation.startsWith('/instructor')) return '/dashboard';
-    if (role == 'instructor' && state.matchedLocation.startsWith('/admin')) return '/subjects';
+    if (role == 'student' && _studentRouteRestricted(state.matchedLocation)) return '/dashboard';
+    if (role == 'instructor' && state.matchedLocation.startsWith('/admin')) return '/dashboard';
 
     return null;
   },
@@ -141,7 +151,17 @@ final appRouter = GoRouter(
         );
       },
       routes: [
-        GoRoute(path: '/dashboard', builder: (context, state) => const StudentDashboardScreen()),
+        GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => FutureBuilder<String?>(
+            future: ProfileService.getUserRole(),
+            builder: (context, snapshot) {
+              final role = snapshot.data;
+              if (role == 'instructor' || role == 'admin') return const InstructorDashboardScreen();
+              return const StudentDashboardScreen();
+            },
+          ),
+        ),
         GoRoute(path: '/batches', builder: (context, state) => const BatchesScreen()),
         GoRoute(path: '/batches/:batchId', builder: (context, state) => BatchDetailsScreen(batchId: state.pathParameters['batchId']!)),
         GoRoute(path: '/subjects', builder: (context, state) => const SubjectsScreen()),
