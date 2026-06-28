@@ -5,7 +5,7 @@ import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 
 import '../../features/admin/screens/admin_dashboard_screen.dart';
-import '../../features/analytics/screens/analytics_dashboard_screen.dart';
+import '../../features/analytics/screens/student_performance_screen.dart';
 import '../../features/analytics/screens/topic_performance_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -56,10 +56,7 @@ int _getIndexFromLocation(String location) {
     return 1;
   }
 
-  if (location.startsWith('/analytics') || location.startsWith('/topic-performance')) {
-    return 2;
-  }
-
+  if (location.startsWith('/analytics') || location.startsWith('/topic-performance')) return 2;
   if (location.startsWith('/study-planner')) return 3;
   if (location.startsWith('/batches')) return 4;
   return 0;
@@ -145,94 +142,42 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(path: '/dashboard', builder: (context, state) => const StudentDashboardScreen()),
         GoRoute(path: '/batches', builder: (context, state) => const BatchesScreen()),
-        GoRoute(
-          path: '/batches/:batchId',
-          builder: (context, state) => BatchDetailsScreen(batchId: state.pathParameters['batchId']!),
-        ),
+        GoRoute(path: '/batches/:batchId', builder: (context, state) => BatchDetailsScreen(batchId: state.pathParameters['batchId']!)),
         GoRoute(path: '/subjects', builder: (context, state) => const SubjectsScreen()),
         GoRoute(path: '/create-subject', builder: (context, state) => const CreateSubjectScreen()),
-        GoRoute(
-          path: '/subjects/:id',
-          builder: (context, state) => SubjectDetailsScreen(subjectId: state.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/subjects/:id/topics',
-          builder: (context, state) => TopicsScreen(subjectId: state.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/subjects/:id/materials',
-          builder: (context, state) => SubjectMaterialsScreen(subjectId: state.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/subjects/:id/upload-material',
-          builder: (context, state) => UploadMaterialScreen(subjectId: state.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId',
-          builder: (context, state) => TopicDetailsScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/summary',
-          builder: (context, state) => TopicSummaryScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/flashcards',
-          builder: (context, state) => TopicFlashcardsScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/quiz',
-          builder: (context, state) => TakeQuizScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/practice',
-          builder: (context, state) => PracticeQuizScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/practice/history',
-          builder: (context, state) => PracticeHistoryScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/practice/play',
-          builder: (context, state) => PracticeQuizPlayerScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/topics/:topicId/exam',
-          builder: (context, state) => TopicExamScreen(topicId: state.pathParameters['topicId']!),
-        ),
-        GoRoute(
-          path: '/take-topic-exam/:examId',
-          builder: (context, state) => TakeTopicExamScreen(examId: state.pathParameters['examId']!),
-        ),
+        GoRoute(path: '/subjects/:id', builder: (context, state) => SubjectDetailsScreen(subjectId: state.pathParameters['id']!)),
+        GoRoute(path: '/subjects/:id/topics', builder: (context, state) => TopicsScreen(subjectId: state.pathParameters['id']!)),
+        GoRoute(path: '/subjects/:id/materials', builder: (context, state) => SubjectMaterialsScreen(subjectId: state.pathParameters['id']!)),
+        GoRoute(path: '/subjects/:id/upload-material', builder: (context, state) => UploadMaterialScreen(subjectId: state.pathParameters['id']!)),
+        GoRoute(path: '/topics/:topicId', builder: (context, state) => TopicDetailsScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/summary', builder: (context, state) => TopicSummaryScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/flashcards', builder: (context, state) => TopicFlashcardsScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/quiz', builder: (context, state) => TakeQuizScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/practice', builder: (context, state) => PracticeQuizScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/practice/history', builder: (context, state) => PracticeHistoryScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/practice/play', builder: (context, state) => PracticeQuizPlayerScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/topics/:topicId/exam', builder: (context, state) => TopicExamScreen(topicId: state.pathParameters['topicId']!)),
+        GoRoute(path: '/take-topic-exam/:examId', builder: (context, state) => TakeTopicExamScreen(examId: state.pathParameters['examId']!)),
         GoRoute(path: '/topic-performance', builder: (context, state) => const TopicPerformanceScreen()),
         GoRoute(path: '/materials', builder: (context, state) => const MaterialsScreen()),
         GoRoute(
           path: '/pdf-viewer',
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is! Map<String, dynamic>) {
-              return _routeErrorScreen('Unable to open this PDF because the file details were missing.');
-            }
+            if (extra is! Map<String, dynamic>) return _routeErrorScreen('Unable to open this PDF because the file details were missing.');
             final title = extra['title'];
             final pdfUrl = extra['pdfUrl'];
-            if (title is! String || pdfUrl is! String || title.isEmpty || pdfUrl.isEmpty) {
-              return _routeErrorScreen('Unable to open this PDF because the file details were invalid.');
-            }
+            if (title is! String || pdfUrl is! String || title.isEmpty || pdfUrl.isEmpty) return _routeErrorScreen('Unable to open this PDF because the file details were invalid.');
             return PdfViewerScreen(title: title, pdfUrl: pdfUrl);
           },
         ),
         GoRoute(path: '/flashcards', builder: (context, state) => const FlashcardsScreen()),
         GoRoute(path: '/exams', builder: (context, state) => const ExamsScreen()),
         GoRoute(path: '/create-exam', builder: (context, state) => const CreateExamScreen()),
-        GoRoute(
-          path: '/create-question/:examId',
-          builder: (context, state) => CreateQuestionScreen(examId: state.pathParameters['examId']!),
-        ),
-        GoRoute(
-          path: '/take-exam/:id',
-          builder: (context, state) => TakeExamScreen(examId: state.pathParameters['id']!),
-        ),
+        GoRoute(path: '/create-question/:examId', builder: (context, state) => CreateQuestionScreen(examId: state.pathParameters['examId']!)),
+        GoRoute(path: '/take-exam/:id', builder: (context, state) => TakeExamScreen(examId: state.pathParameters['id']!)),
         GoRoute(path: '/results', builder: (context, state) => const ResultsScreen()),
-        GoRoute(path: '/analytics', builder: (context, state) => const AnalyticsDashboardScreen()),
+        GoRoute(path: '/analytics', builder: (context, state) => const StudentPerformanceScreen()),
         GoRoute(path: '/study-planner', builder: (context, state) => const StudyPlannerScreen()),
       ],
     ),
