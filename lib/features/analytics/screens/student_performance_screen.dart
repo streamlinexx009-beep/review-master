@@ -10,8 +10,6 @@ class StudentPerformanceScreen extends ConsumerStatefulWidget {
 }
 
 class _StudentPerformanceScreenState extends ConsumerState<StudentPerformanceScreen> {
-  final supabase = Supabase.instance.client;
-
   String? selectedSubjectId;
   String? selectedSubjectName;
   String? selectedStudentId;
@@ -24,57 +22,130 @@ class _StudentPerformanceScreenState extends ConsumerState<StudentPerformanceScr
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Student Performance', style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Choose a subject, select an enrolled student, then monitor the student performance and progress.',
-            style: Theme.of(context).textTheme.bodyLarge,
+          _PerformanceHeader(
+            selectedSubjectName: selectedSubjectName,
+            selectedStudentName: selectedStudentName,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Expanded(
-            child: Row(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 1120;
+
+                final subjectsPanel = _SubjectsPanel(
+                  selectedSubjectId: selectedSubjectId,
+                  onSelect: (subject) {
+                    setState(() {
+                      selectedSubjectId = subject.id;
+                      selectedSubjectName = subject.name;
+                      selectedStudentId = null;
+                      selectedStudentName = null;
+                    });
+                  },
+                );
+
+                final studentsPanel = _StudentsPanel(
+                  subjectId: selectedSubjectId,
+                  selectedStudentId: selectedStudentId,
+                  onSelect: (student) {
+                    setState(() {
+                      selectedStudentId = student.id;
+                      selectedStudentName = student.name;
+                    });
+                  },
+                );
+
+                final progressPanel = _StudentProgressPanel(
+                  subjectId: selectedSubjectId,
+                  subjectName: selectedSubjectName,
+                  studentId: selectedStudentId,
+                  studentName: selectedStudentName,
+                );
+
+                if (compact) {
+                  return ListView(
+                    children: [
+                      SizedBox(height: 390, child: subjectsPanel),
+                      const SizedBox(height: 16),
+                      SizedBox(height: 390, child: studentsPanel),
+                      const SizedBox(height: 16),
+                      SizedBox(height: 560, child: progressPanel),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 310, child: subjectsPanel),
+                    const SizedBox(width: 16),
+                    SizedBox(width: 340, child: studentsPanel),
+                    const SizedBox(width: 16),
+                    Expanded(child: progressPanel),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PerformanceHeader extends StatelessWidget {
+  final String? selectedSubjectName;
+  final String? selectedStudentName;
+
+  const _PerformanceHeader({required this.selectedSubjectName, required this.selectedStudentName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEEF2FF), Color(0xFFE0F2FE)],
+        ),
+        border: Border.all(color: Colors.white),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Icon(Icons.insights_rounded, color: Color(0xFF4F46E5), size: 34),
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 320,
-                  child: _SubjectsPanel(
-                    selectedSubjectId: selectedSubjectId,
-                    onSelect: (subject) {
-                      setState(() {
-                        selectedSubjectId = subject.id;
-                        selectedSubjectName = subject.name;
-                        selectedStudentId = null;
-                        selectedStudentName = null;
-                      });
-                    },
-                  ),
+                Text(
+                  'Student Performance',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF0F172A),
+                      ),
                 ),
-                const SizedBox(width: 18),
-                SizedBox(
-                  width: 360,
-                  child: _StudentsPanel(
-                    subjectId: selectedSubjectId,
-                    selectedStudentId: selectedStudentId,
-                    onSelect: (student) {
-                      setState(() {
-                        selectedStudentId = student.id;
-                        selectedStudentName = student.name;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: _StudentProgressPanel(
-                    subjectId: selectedSubjectId,
-                    subjectName: selectedSubjectName,
-                    studentId: selectedStudentId,
-                    studentName: selectedStudentName,
-                  ),
+                const SizedBox(height: 6),
+                Text(
+                  selectedStudentName == null
+                      ? 'Choose a subject, then select an enrolled student to monitor progress.'
+                      : 'Monitoring $selectedStudentName in ${selectedSubjectName ?? 'selected subject'}.',
+                  style: const TextStyle(color: Color(0xFF475569), height: 1.4),
                 ),
               ],
             ),
           ),
+          if (selectedSubjectName != null)
+            _StatusPill(icon: Icons.menu_book_rounded, label: selectedSubjectName!),
         ],
       ),
     );
@@ -121,8 +192,8 @@ class _SubjectsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _PanelCard(
-      title: 'Subjects',
-      subtitle: 'Select a subject',
+      title: '1. Subjects',
+      subtitle: 'Pick the class you want to inspect.',
       child: FutureBuilder<List<_SubjectItem>>(
         future: _loadSubjects(),
         builder: (context, snapshot) {
@@ -131,27 +202,26 @@ class _SubjectsPanel extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return Text(snapshot.error.toString());
+            return _InlineError(message: snapshot.error.toString());
           }
 
           final subjects = snapshot.data ?? [];
           if (subjects.isEmpty) {
-            return const Text('No subjects available.');
+            return const _EmptyHint(icon: Icons.menu_book_outlined, message: 'No subjects available yet.');
           }
 
           return ListView.separated(
             itemCount: subjects.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final subject = subjects[index];
               final selected = subject.id == selectedSubjectId;
 
-              return ListTile(
+              return _SelectableTile(
                 selected: selected,
-                selectedTileColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.45),
-                leading: const Icon(Icons.menu_book_outlined),
-                title: Text(subject.name),
-                subtitle: Text(subject.description ?? 'No description'),
+                icon: Icons.menu_book_rounded,
+                title: subject.name,
+                subtitle: subject.description ?? 'No section details',
                 onTap: () => onSelect(subject),
               );
             },
@@ -197,10 +267,10 @@ class _StudentsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _PanelCard(
-      title: 'Enrolled Students',
-      subtitle: subjectId == null ? 'Select a subject first' : 'Select a student',
+      title: '2. Enrolled Students',
+      subtitle: subjectId == null ? 'Select a subject first.' : 'Pick a student to monitor.',
       child: subjectId == null
-          ? const Center(child: Text('Choose a subject to see enrolled students.'))
+          ? const _EmptyHint(icon: Icons.arrow_back_rounded, message: 'Choose a subject to load enrolled students.')
           : FutureBuilder<List<_StudentItem>>(
               future: _loadStudents(subjectId!),
               builder: (context, snapshot) {
@@ -209,27 +279,26 @@ class _StudentsPanel extends StatelessWidget {
                 }
 
                 if (snapshot.hasError) {
-                  return Text(snapshot.error.toString());
+                  return _InlineError(message: snapshot.error.toString());
                 }
 
                 final students = snapshot.data ?? [];
                 if (students.isEmpty) {
-                  return const Text('No students enrolled in this subject yet.');
+                  return const _EmptyHint(icon: Icons.person_off_outlined, message: 'No students enrolled in this subject yet.');
                 }
 
                 return ListView.separated(
                   itemCount: students.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final student = students[index];
                     final selected = student.id == selectedStudentId;
 
-                    return ListTile(
+                    return _SelectableTile(
                       selected: selected,
-                      selectedTileColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.45),
-                      leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-                      title: Text(student.name),
-                      subtitle: Text(student.email ?? 'No email'),
+                      icon: Icons.person_rounded,
+                      title: student.name,
+                      subtitle: student.email ?? 'No email available',
                       onTap: () => onSelect(student),
                     );
                   },
@@ -302,15 +371,15 @@ class _StudentProgressPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     if (subjectId == null) {
       return const _EmptyProgressMessage(
-        title: 'Select a subject',
-        message: 'Choose a subject from the left panel to view enrolled students.',
+        title: '3. Progress Monitor',
+        message: 'Select a subject first. The student list will appear in the middle panel.',
       );
     }
 
     if (studentId == null) {
       return const _EmptyProgressMessage(
-        title: 'Select a student',
-        message: 'Choose a student to monitor his/her performance.',
+        title: '3. Progress Monitor',
+        message: 'Select an enrolled student to view exam attempts and performance summary.',
       );
     }
 
@@ -325,7 +394,7 @@ class _StudentProgressPanel extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return Text(snapshot.error.toString());
+            return _InlineError(message: snapshot.error.toString());
           }
 
           final data = snapshot.data ?? const _StudentProgressData(
@@ -341,30 +410,38 @@ class _StudentProgressPanel extends StatelessWidget {
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final narrow = constraints.maxWidth < 720;
-                  final cards = [
-                    _MiniStat(title: 'Attempts', value: '${data.attempts}', icon: Icons.assignment_outlined),
-                    _MiniStat(title: 'Average', value: '${data.averageScore.toStringAsFixed(0)}%', icon: Icons.trending_up),
-                    _MiniStat(title: 'Best', value: '${data.bestScore.toStringAsFixed(0)}%', icon: Icons.emoji_events_outlined),
-                    _MiniStat(title: 'Passed', value: '${data.passed}', icon: Icons.check_circle_outline),
-                  ];
-
-                  if (narrow) {
-                    return Column(children: cards.map((card) => Padding(padding: const EdgeInsets.only(bottom: 12), child: card)).toList());
-                  }
-
-                  return Row(children: cards.map((card) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 12), child: card))).toList());
+                  final count = constraints.maxWidth < 720 ? 2 : 4;
+                  return GridView.count(
+                    crossAxisCount: count,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.25,
+                    children: [
+                      _MiniStat(title: 'Attempts', value: '${data.attempts}', icon: Icons.assignment_outlined, color: const Color(0xFF0EA5E9)),
+                      _MiniStat(title: 'Average', value: '${data.averageScore.toStringAsFixed(0)}%', icon: Icons.trending_up, color: const Color(0xFF8B5CF6)),
+                      _MiniStat(title: 'Best', value: '${data.bestScore.toStringAsFixed(0)}%', icon: Icons.emoji_events_outlined, color: const Color(0xFFF97316)),
+                      _MiniStat(title: 'Passed', value: '${data.passed}', icon: Icons.check_circle_outline, color: const Color(0xFF10B981)),
+                    ],
+                  );
                 },
               ),
               const SizedBox(height: 20),
-              Text('Exam Performance', style: Theme.of(context).textTheme.titleLarge),
+              Row(
+                children: [
+                  Expanded(child: Text('Exam Performance', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))),
+                  _StatusPill(icon: Icons.close_rounded, label: '${data.failed} failed'),
+                ],
+              ),
               const SizedBox(height: 12),
               if (data.rows.isEmpty)
-                const Text('No exam attempts yet for this subject.')
+                const _EmptyHint(icon: Icons.fact_check_outlined, message: 'No exam attempts yet for this subject.')
               else
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                     columns: const [
                       DataColumn(label: Text('Exam')),
                       DataColumn(label: Text('Score')),
@@ -375,7 +452,7 @@ class _StudentProgressPanel extends StatelessWidget {
                         cells: [
                           DataCell(Text(row.title)),
                           DataCell(Text('${row.score.toStringAsFixed(0)}%')),
-                          DataCell(Text(row.passed ? 'Passed' : 'Failed')),
+                          DataCell(_ResultBadge(passed: row.passed)),
                         ],
                       );
                     }).toList(),
@@ -401,19 +478,72 @@ class _PanelCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
-            Text(subtitle),
+            Text(subtitle, style: const TextStyle(color: Color(0xFF64748B))),
             const SizedBox(height: 16),
             Expanded(child: child),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectableTile extends StatelessWidget {
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SelectableTile({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFECFDF5) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: selected ? const Color(0xFF14B8A6) : const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: selected ? const Color(0xFFCCFBF1) : Colors.white,
+              child: Icon(icon, color: selected ? const Color(0xFF0F766E) : const Color(0xFF64748B)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+                ],
+              ),
+            ),
+            if (selected) const Icon(Icons.check_circle_rounded, color: Color(0xFF0F766E)),
           ],
         ),
       ),
@@ -425,26 +555,117 @@ class _MiniStat extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
+  final Color color;
 
-  const _MiniStat({required this.title, required this.value, required this.icon});
+  const _MiniStat({required this.title, required this.value, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon),
-            const SizedBox(height: 14),
-            Text(value, style: Theme.of(context).textTheme.titleLarge),
-            Text(title),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.20)),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color),
+          const Spacer(),
+          Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          Text(title, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _StatusPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.75),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF475569)),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF475569))),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultBadge extends StatelessWidget {
+  final bool passed;
+
+  const _ResultBadge({required this.passed});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = passed ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        passed ? 'Passed' : 'Failed',
+        style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12),
+      ),
+    );
+  }
+}
+
+class _EmptyHint extends StatelessWidget {
+  final IconData icon;
+  final String message;
+
+  const _EmptyHint({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(radius: 28, child: Icon(icon)),
+          const SizedBox(height: 14),
+          Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF64748B), height: 1.4)),
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineError extends StatelessWidget {
+  final String message;
+
+  const _InlineError({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Text(message, style: const TextStyle(color: Color(0xFF991B1B))),
     );
   }
 }
@@ -459,8 +680,8 @@ class _EmptyProgressMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return _PanelCard(
       title: title,
-      subtitle: 'Student monitoring',
-      child: Center(child: Text(message, textAlign: TextAlign.center)),
+      subtitle: 'Follow the step-by-step panels from left to right.',
+      child: _EmptyHint(icon: Icons.touch_app_rounded, message: message),
     );
   }
 }
