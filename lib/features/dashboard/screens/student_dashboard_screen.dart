@@ -1,38 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/services/profile_service.dart';
-
 class StudentDashboardScreen extends StatelessWidget {
   const StudentDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: ProfileService.getUserRole(),
-      builder: (context, snapshot) {
-        final role = snapshot.data;
-        final isTeacher = role == 'instructor' || role == 'admin';
-
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1240),
-              child: _DashboardHero(isTeacher: isTeacher),
-            ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1240),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _StudentHero(
+                onOpenClasses: () => context.go('/subjects'),
+                onViewResults: () => context.go('/results'),
+              ),
+              const SizedBox(height: 24),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final twoColumns = constraints.maxWidth >= 860;
+                  return GridView.count(
+                    crossAxisCount: twoColumns ? 2 : 1,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 18,
+                    mainAxisSpacing: 18,
+                    childAspectRatio: twoColumns ? 2.8 : 3.4,
+                    children: [
+                      _StudentActionCard(
+                        title: 'Continue learning',
+                        description: 'Open your classes to view materials, review cards, quizzes, exams, and scores.',
+                        icon: Icons.auto_stories_rounded,
+                        color: const Color(0xFF0F766E),
+                        buttonLabel: 'Open Classes',
+                        onTap: () => context.go('/subjects'),
+                      ),
+                      _StudentActionCard(
+                        title: 'Check my results',
+                        description: 'Review your submitted exams, scores, and answer feedback.',
+                        icon: Icons.assessment_rounded,
+                        color: const Color(0xFF10B981),
+                        buttonLabel: 'My Results',
+                        onTap: () => context.go('/results'),
+                      ),
+                      _StudentActionCard(
+                        title: 'Study planner',
+                        description: 'Organize your review tasks and keep track of what you need to study.',
+                        icon: Icons.event_note_rounded,
+                        color: const Color(0xFF0EA5E9),
+                        buttonLabel: 'Open Planner',
+                        onTap: () => context.go('/study-planner'),
+                      ),
+                      _StudentActionCard(
+                        title: 'Review materials',
+                        description: 'Use class files and flashcards to review lessons at your own pace.',
+                        icon: Icons.style_rounded,
+                        color: const Color(0xFF8B5CF6),
+                        buttonLabel: 'Open Classes',
+                        onTap: () => context.go('/subjects'),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-class _DashboardHero extends StatelessWidget {
-  final bool isTeacher;
+class _StudentHero extends StatelessWidget {
+  final VoidCallback onOpenClasses;
+  final VoidCallback onViewResults;
 
-  const _DashboardHero({required this.isTeacher});
+  const _StudentHero({required this.onOpenClasses, required this.onViewResults});
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +94,7 @@ class _DashboardHero extends StatelessWidget {
           colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
         ),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A14B8A6),
-            blurRadius: 26,
-            offset: Offset(0, 12),
-          ),
+          BoxShadow(color: Color(0x1A14B8A6), blurRadius: 26, offset: Offset(0, 12)),
         ],
       ),
       child: Stack(
@@ -59,43 +102,26 @@ class _DashboardHero extends StatelessWidget {
           Positioned(
             right: -16,
             bottom: -48,
-            child: Icon(
-              isTeacher ? Icons.school_rounded : Icons.auto_stories_rounded,
-              size: 190,
-              color: Colors.white.withOpacity(0.12),
-            ),
+            child: Icon(Icons.auto_stories_rounded, size: 190, color: Colors.white.withOpacity(0.12)),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Text(
-                  isTeacher ? 'Teacher Workspace' : 'Student Workspace',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12),
-                ),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(99)),
+                child: const Text('Student Workspace', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
               ),
               const SizedBox(height: 18),
-              Text(
-                isTeacher ? 'Welcome to your teaching dashboard' : 'Welcome to your learning dashboard',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  height: 1.1,
-                  fontWeight: FontWeight.w900,
-                ),
+              const Text(
+                'Welcome to your learning dashboard',
+                style: TextStyle(color: Colors.white, fontSize: 36, height: 1.1, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 10),
               SizedBox(
                 width: 760,
                 child: Text(
-                  isTeacher
-                      ? 'Use the sidebar to open your classes, student performance, study planner, and batches. Start with Classes when preparing materials, review cards, tests, and scores.'
-                      : 'Use the sidebar to open your classes, activities, planner, and results. Start with your classes to continue learning.',
+                  'This workspace is for students: open your enrolled classes, study materials, take tests, and view your own results.',
                   style: TextStyle(color: Colors.white.withOpacity(0.92), fontSize: 16, height: 1.45),
                 ),
               ),
@@ -105,30 +131,79 @@ class _DashboardHero extends StatelessWidget {
                 runSpacing: 12,
                 children: [
                   FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0F766E),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    ),
-                    onPressed: () => context.go('/subjects'),
+                    style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF0F766E), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16)),
+                    onPressed: onOpenClasses,
                     icon: const Icon(Icons.menu_book_rounded),
-                    label: Text(isTeacher ? 'Open Classes' : 'Open My Classes'),
+                    label: const Text('Open My Classes'),
                   ),
                   OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withOpacity(0.6)),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    ),
-                    onPressed: () => context.go(isTeacher ? '/analytics' : '/results'),
-                    icon: const Icon(Icons.insights_rounded),
-                    label: Text(isTeacher ? 'View Student Performance' : 'View Results'),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: BorderSide(color: Colors.white.withOpacity(0.6)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16)),
+                    onPressed: onViewResults,
+                    icon: const Icon(Icons.assessment_rounded),
+                    label: const Text('View My Results'),
                   ),
                 ],
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StudentActionCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+  final String buttonLabel;
+  final VoidCallback onTap;
+
+  const _StudentActionCard({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+    required this.buttonLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26), side: const BorderSide(color: Color(0xFFE2E8F0))),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Row(
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(22)),
+                child: Icon(icon, color: color, size: 30),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A))),
+                    const SizedBox(height: 6),
+                    Text(description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF64748B), height: 1.35)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              FilledButton.tonal(onPressed: onTap, child: Text(buttonLabel)),
+            ],
+          ),
+        ),
       ),
     );
   }
