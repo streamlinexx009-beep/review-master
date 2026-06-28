@@ -366,11 +366,11 @@ class _StudentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scrollbar(
+    return Scrollbar(
       thumbVisibility: true,
       child: ListView(
-        padding: EdgeInsets.only(bottom: 36),
-        children: [
+        padding: const EdgeInsets.only(bottom: 36),
+        children: const [
           _SectionIntro(
             title: 'Students',
             subtitle: 'View the people connected to this class.',
