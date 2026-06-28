@@ -30,47 +30,54 @@ class StudentDashboardScreen extends StatelessWidget {
                       if (constraints.maxWidth < 1120) count = 2;
                       if (constraints.maxWidth < 680) count = 1;
 
-                      return GridView.count(
-                        crossAxisCount: count,
+                      return GridView.builder(
+                        itemCount: 4,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 18,
-                        mainAxisSpacing: 18,
-                        childAspectRatio: count == 1 ? 3.6 : 1.5,
-                        children: [
-                          _ActionCard(
-                            title: isTeacher ? 'My Classes' : 'My Classes',
-                            subtitle: isTeacher ? 'Open subjects and manage class modules.' : 'Open your enrolled classes and activities.',
-                            icon: Icons.menu_book_rounded,
-                            color: const Color(0xFF0F766E),
-                            buttonLabel: 'Open',
-                            onTap: () => context.go('/subjects'),
-                          ),
-                          _ActionCard(
-                            title: isTeacher ? 'Student Performance' : 'My Progress',
-                            subtitle: isTeacher ? 'Monitor enrolled students and exam progress.' : 'Review your scores and learning progress.',
-                            icon: Icons.insights_rounded,
-                            color: const Color(0xFF4F46E5),
-                            buttonLabel: 'View',
-                            onTap: () => context.go('/analytics'),
-                          ),
-                          _ActionCard(
-                            title: 'Study Planner',
-                            subtitle: isTeacher ? 'Plan lessons, reviews, and learning schedules.' : 'Organize your study schedule and reminders.',
-                            icon: Icons.event_note_rounded,
-                            color: const Color(0xFF0EA5E9),
-                            buttonLabel: 'Plan',
-                            onTap: () => context.go('/study-planner'),
-                          ),
-                          _ActionCard(
-                            title: isTeacher ? 'Batches' : 'Activities',
-                            subtitle: isTeacher ? 'Manage class groups and enrolled students.' : 'Continue quizzes, materials, and class tasks.',
-                            icon: isTeacher ? Icons.groups_rounded : Icons.play_circle_fill_rounded,
-                            color: const Color(0xFFF97316),
-                            buttonLabel: isTeacher ? 'Manage' : 'Continue',
-                            onTap: () => isTeacher ? context.go('/batches') : context.go('/subjects'),
-                          ),
-                        ],
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: count,
+                          crossAxisSpacing: 18,
+                          mainAxisSpacing: 18,
+                          mainAxisExtent: 230,
+                        ),
+                        itemBuilder: (context, index) {
+                          final cards = [
+                            _ActionCard(
+                              title: 'My Classes',
+                              subtitle: isTeacher ? 'Open subjects and manage class modules.' : 'Open your enrolled classes and activities.',
+                              icon: Icons.menu_book_rounded,
+                              color: const Color(0xFF0F766E),
+                              buttonLabel: 'Open classes',
+                              onTap: () => context.go('/subjects'),
+                            ),
+                            _ActionCard(
+                              title: isTeacher ? 'Student Performance' : 'My Progress',
+                              subtitle: isTeacher ? 'Monitor enrolled students and exam progress.' : 'Review your scores and learning progress.',
+                              icon: Icons.insights_rounded,
+                              color: const Color(0xFF4F46E5),
+                              buttonLabel: 'View progress',
+                              onTap: () => context.go('/analytics'),
+                            ),
+                            _ActionCard(
+                              title: 'Study Planner',
+                              subtitle: isTeacher ? 'Plan lessons, reviews, and learning schedules.' : 'Organize your study schedule and reminders.',
+                              icon: Icons.event_note_rounded,
+                              color: const Color(0xFF0EA5E9),
+                              buttonLabel: 'Open planner',
+                              onTap: () => context.go('/study-planner'),
+                            ),
+                            _ActionCard(
+                              title: isTeacher ? 'Batches' : 'Activities',
+                              subtitle: isTeacher ? 'Manage class groups and enrolled students.' : 'Continue quizzes, materials, and class tasks.',
+                              icon: isTeacher ? Icons.groups_rounded : Icons.play_circle_fill_rounded,
+                              color: const Color(0xFFF97316),
+                              buttonLabel: isTeacher ? 'Manage batches' : 'Continue',
+                              onTap: () => isTeacher ? context.go('/batches') : context.go('/subjects'),
+                            ),
+                          ];
+
+                          return cards[index];
+                        },
                       );
                     },
                   ),
@@ -242,7 +249,7 @@ class _ActionCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -255,15 +262,35 @@ class _ActionCard extends StatelessWidget {
                     child: Icon(icon, color: color, size: 28),
                   ),
                   const Spacer(),
-                  const Icon(Icons.arrow_forward_rounded, color: Color(0xFF94A3B8)),
+                  Icon(Icons.arrow_forward_rounded, color: color.withOpacity(0.55)),
                 ],
               ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Color(0xFF64748B), height: 1.35),
+              ),
               const Spacer(),
-              Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A))),
-              const SizedBox(height: 6),
-              Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF64748B), height: 1.35)),
-              const SizedBox(height: 16),
-              Text(buttonLabel, style: TextStyle(color: color, fontWeight: FontWeight.w900)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  buttonLabel,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 12),
+                ),
+              ),
             ],
           ),
         ),
