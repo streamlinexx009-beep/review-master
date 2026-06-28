@@ -42,14 +42,26 @@ import '../../features/topics/screens/topics_screen.dart';
 import '../../shared/widgets/google_shell.dart';
 
 int _getIndexFromLocation(String location) {
-  if (location.startsWith('/subjects')) return 1;
-  if (location.startsWith('/materials') || location.startsWith('/pdf-viewer')) return 2;
-  if (location.startsWith('/flashcards')) return 3;
-  if (location.startsWith('/exams') || location.startsWith('/create-exam') || location.startsWith('/take-exam')) return 4;
-  if (location.startsWith('/results')) return 5;
-  if (location.startsWith('/analytics') || location.startsWith('/topic-performance')) return 6;
-  if (location.startsWith('/study-planner')) return 7;
-  if (location.startsWith('/batches')) return 8;
+  if (location.startsWith('/subjects') ||
+      location.startsWith('/materials') ||
+      location.startsWith('/pdf-viewer') ||
+      location.startsWith('/flashcards') ||
+      location.startsWith('/exams') ||
+      location.startsWith('/create-exam') ||
+      location.startsWith('/take-exam') ||
+      location.startsWith('/take-topic-exam') ||
+      location.startsWith('/create-question') ||
+      location.startsWith('/results') ||
+      location.startsWith('/topics')) {
+    return 1;
+  }
+
+  if (location.startsWith('/analytics') || location.startsWith('/topic-performance')) {
+    return 2;
+  }
+
+  if (location.startsWith('/study-planner')) return 3;
+  if (location.startsWith('/batches')) return 4;
   return 0;
 }
 
@@ -77,24 +89,12 @@ void _goToShellDestination(BuildContext context, int index) {
       context.go('/subjects');
       break;
     case 2:
-      context.go('/materials');
-      break;
-    case 3:
-      context.go('/flashcards');
-      break;
-    case 4:
-      context.go('/exams');
-      break;
-    case 5:
-      context.go('/results');
-      break;
-    case 6:
       context.go('/analytics');
       break;
-    case 7:
+    case 3:
       context.go('/study-planner');
       break;
-    case 8:
+    case 4:
       context.go('/batches');
       break;
   }
