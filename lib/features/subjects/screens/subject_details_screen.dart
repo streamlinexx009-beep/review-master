@@ -26,45 +26,61 @@ class SubjectDetailsScreen extends ConsumerWidget {
 
         return DefaultTabController(
           length: 4,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                _ClassHeader(
-                  name: data.name,
-                  description: data.description,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1240),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+                child: Column(
+                  children: [
+                    _ClassHeader(
+                      name: data.name,
+                      description: data.description,
+                    ),
+                    const SizedBox(height: 28),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x080F172A),
+                            blurRadius: 18,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        child: TabBar(
+                          labelColor: Color(0xFF0F766E),
+                          unselectedLabelColor: Color(0xFF64748B),
+                          indicatorColor: Color(0xFF0F766E),
+                          indicatorSize: TabBarIndicatorSize.label,
+                          tabs: [
+                            Tab(icon: Icon(Icons.campaign_outlined), text: 'Class Feed'),
+                            Tab(icon: Icon(Icons.auto_stories_outlined), text: 'Learning'),
+                            Tab(icon: Icon(Icons.people_outline), text: 'Students'),
+                            Tab(icon: Icon(Icons.assessment_outlined), text: 'Scores'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          const _ClassFeedTab(),
+                          _LearningTab(subjectId: subjectId),
+                          const _StudentsTab(),
+                          const _ScoresTab(),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 18),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: const TabBar(
-                    labelColor: Color(0xFF0F766E),
-                    unselectedLabelColor: Color(0xFF64748B),
-                    indicatorColor: Color(0xFF0F766E),
-                    tabs: [
-                      Tab(icon: Icon(Icons.campaign_outlined), text: 'Class Feed'),
-                      Tab(icon: Icon(Icons.auto_stories_outlined), text: 'Learning'),
-                      Tab(icon: Icon(Icons.people_outline), text: 'Students'),
-                      Tab(icon: Icon(Icons.assessment_outlined), text: 'Scores'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      const _ClassFeedTab(),
-                      _LearningTab(subjectId: subjectId),
-                      const _StudentsTab(),
-                      const _ScoresTab(),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -83,9 +99,9 @@ class _ClassHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 30),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(32),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -94,20 +110,20 @@ class _ClassHeader extends StatelessWidget {
         boxShadow: const [
           BoxShadow(
             color: Color(0x2214B8A6),
-            blurRadius: 24,
-            offset: Offset(0, 12),
+            blurRadius: 28,
+            offset: Offset(0, 14),
           ),
         ],
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -24,
-            bottom: -42,
+            right: -16,
+            bottom: -40,
             child: Icon(
               Icons.school_rounded,
               color: Colors.white.withOpacity(0.12),
-              size: 170,
+              size: 164,
             ),
           ),
           Column(
@@ -128,25 +144,33 @@ class _ClassHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               Text(
                 name,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 34,
-                  height: 1.1,
+                  fontSize: 36,
+                  height: 1.08,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(
                 description ?? 'Class details not added yet',
                 style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
               ),
-              const SizedBox(height: 18),
-              const Text(
-                'Use the tabs below: post updates, add learning activities, view students, and check scores.',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.13),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.18)),
+                ),
+                child: const Text(
+                  'Start with one tab below: post updates, add learning activities, view students, or check scores.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.35),
+                ),
               ),
             ],
           ),
@@ -162,6 +186,7 @@ class _ClassFeedTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
       children: [
         _SectionIntro(
           title: 'Class Feed',
@@ -169,25 +194,27 @@ class _ClassFeedTab extends StatelessWidget {
           icon: Icons.campaign_outlined,
           color: const Color(0xFF0F766E),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         _ModernCard(
           child: Row(
             children: [
               const CircleAvatar(
+                radius: 25,
                 backgroundColor: Color(0xFFCCFBF1),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0F766E)),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Post a class update', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 4),
-                    const Text('Share instructions, reminders, or announcements with your class.'),
+                    const SizedBox(height: 6),
+                    const Text('Share instructions, reminders, or announcements with your class.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
                   ],
                 ),
               ),
+              const SizedBox(width: 18),
               FilledButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.add_rounded),
@@ -196,7 +223,7 @@ class _ClassFeedTab extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 20),
         const _FriendlyNote(
           icon: Icons.info_outline_rounded,
           title: 'No updates yet',
@@ -215,44 +242,37 @@ class _LearningTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: _SectionIntro(
-                title: 'Learning',
-                subtitle: 'Choose what you want to prepare or review for this class.',
-                icon: Icons.auto_stories_outlined,
-                color: Color(0xFF0EA5E9),
-              ),
-            ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: () => context.go('/subjects/$subjectId/topics'),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Topic'),
-            ),
-          ],
+        _SectionIntro(
+          title: 'Learning',
+          subtitle: 'Choose one activity to prepare or review. Each card has a clear action for teachers and students.',
+          icon: Icons.auto_stories_outlined,
+          color: const Color(0xFF0EA5E9),
+          trailing: FilledButton.icon(
+            onPressed: () => context.go('/subjects/$subjectId/topics'),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Topic'),
+          ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 28),
         LayoutBuilder(
           builder: (context, constraints) {
-            var count = 4;
-            if (constraints.maxWidth < 1100) count = 2;
-            if (constraints.maxWidth < 650) count = 1;
+            var count = 2;
+            if (constraints.maxWidth < 820) count = 1;
 
             return GridView.count(
               crossAxisCount: count,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.05,
+              crossAxisSpacing: 24,
+              mainAxisSpacing: 24,
+              childAspectRatio: constraints.maxWidth < 820 ? 2.2 : 2.35,
               children: [
                 _LearningActionCard(
                   title: 'Learning Files',
-                  shortLabel: 'Upload or open PDFs',
-                  description: 'Use this for handouts, reviewers, modules, and lecture notes.',
+                  shortLabel: 'PDFs and handouts',
+                  description: 'Handouts, reviewers, modules, and lecture notes for this class.',
                   icon: Icons.folder_outlined,
                   color: const Color(0xFF0EA5E9),
                   primaryLabel: 'Open Files',
@@ -262,8 +282,8 @@ class _LearningTab extends StatelessWidget {
                 ),
                 _LearningActionCard(
                   title: 'Review Cards',
-                  shortLabel: 'Quick memorization',
-                  description: 'Use this for terms, definitions, formulas, and short recall practice.',
+                  shortLabel: 'Quick review',
+                  description: 'Terms, definitions, formulas, and short recall practice.',
                   icon: Icons.style_outlined,
                   color: const Color(0xFF8B5CF6),
                   primaryLabel: 'Open Cards',
@@ -272,7 +292,7 @@ class _LearningTab extends StatelessWidget {
                 _LearningActionCard(
                   title: 'Tests',
                   shortLabel: 'Quizzes and exams',
-                  description: 'Use this to create assessments and let students answer them.',
+                  description: 'Create assessments and let students answer them online.',
                   icon: Icons.quiz_outlined,
                   color: const Color(0xFFF97316),
                   primaryLabel: 'Open Tests',
@@ -281,7 +301,7 @@ class _LearningTab extends StatelessWidget {
                 _LearningActionCard(
                   title: 'Scores',
                   shortLabel: 'Results and feedback',
-                  description: 'Use this to review submitted attempts, scores, and performance.',
+                  description: 'Review submitted attempts, scores, and class performance.',
                   icon: Icons.assessment_outlined,
                   color: const Color(0xFF10B981),
                   primaryLabel: 'Open Scores',
@@ -302,6 +322,7 @@ class _StudentsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
       children: const [
         _SectionIntro(
           title: 'Students',
@@ -309,7 +330,7 @@ class _StudentsTab extends StatelessWidget {
           icon: Icons.people_outline,
           color: Color(0xFF6366F1),
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 24),
         _FriendlyNote(
           icon: Icons.groups_outlined,
           title: 'Class list',
@@ -326,6 +347,7 @@ class _ScoresTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
       children: [
         const _SectionIntro(
           title: 'Scores',
@@ -333,25 +355,27 @@ class _ScoresTab extends StatelessWidget {
           icon: Icons.assessment_outlined,
           color: Color(0xFF10B981),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         _ModernCard(
           child: Row(
             children: [
               const CircleAvatar(
+                radius: 25,
                 backgroundColor: Color(0xFFDCFCE7),
                 child: Icon(Icons.analytics_outlined, color: Color(0xFF16A34A)),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 18),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Performance and results'),
-                    SizedBox(height: 4),
-                    Text('Open the results page or student performance monitor to review submitted work.'),
+                    Text('Performance and results', style: TextStyle(fontWeight: FontWeight.w900)),
+                    SizedBox(height: 6),
+                    Text('Open the results page or student performance monitor to review submitted work.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
                   ],
                 ),
               ),
+              const SizedBox(width: 18),
               FilledButton.icon(
                 onPressed: () => context.go('/results'),
                 icon: const Icon(Icons.open_in_new_rounded),
@@ -370,42 +394,55 @@ class _SectionIntro extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color color;
+  final Widget? trailing;
 
   const _SectionIntro({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.color,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(18)),
-            child: Icon(icon, color: color),
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+            child: Icon(icon, color: color, size: 28),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), height: 1.35)),
+                const SizedBox(height: 6),
+                Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), height: 1.4)),
               ],
             ),
           ),
+          if (trailing != null) ...[
+            const SizedBox(width: 18),
+            trailing!,
+          ],
         ],
       ),
     );
@@ -439,44 +476,50 @@ class _LearningActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: const BorderSide(color: Color(0xFFE2E8F0))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: const BorderSide(color: Color(0xFFE2E8F0))),
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         onTap: onPrimary,
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
+          padding: const EdgeInsets.all(26),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(18)),
-                    child: Icon(icon, color: color),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(99), border: Border.all(color: const Color(0xFFE2E8F0))),
-                    child: Text(shortLabel, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w800, fontSize: 11)),
-                  ),
-                ],
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(22)),
+                child: Icon(icon, color: color, size: 30),
               ),
-              const SizedBox(height: 18),
-              Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-              const SizedBox(height: 8),
-              Expanded(child: Text(description, style: const TextStyle(color: Color(0xFF64748B), height: 1.35))),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(child: FilledButton(onPressed: onPrimary, child: Text(primaryLabel))),
-                  if (secondaryLabel != null && onSecondary != null) ...[
-                    const SizedBox(width: 10),
-                    Expanded(child: OutlinedButton(onPressed: onSecondary, child: Text(secondaryLabel!))),
+              const SizedBox(width: 22),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(99), border: Border.all(color: const Color(0xFFE2E8F0))),
+                          child: Text(shortLabel, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w800, fontSize: 11)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(child: Text(description, style: const TextStyle(color: Color(0xFF64748B), height: 1.45))),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        SizedBox(width: 132, child: FilledButton(onPressed: onPrimary, child: Text(primaryLabel))),
+                        if (secondaryLabel != null && onSecondary != null) ...[
+                          const SizedBox(width: 12),
+                          SizedBox(width: 132, child: OutlinedButton(onPressed: onSecondary, child: Text(secondaryLabel!))),
+                        ],
+                      ],
+                    ),
                   ],
-                ],
+                ),
               ),
             ],
           ),
@@ -498,9 +541,12 @@ class _FriendlyNote extends StatelessWidget {
     return _ModernCard(
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        leading: CircleAvatar(child: Icon(icon)),
+        leading: CircleAvatar(radius: 24, child: Icon(icon)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-        subtitle: Text(message),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(message, style: const TextStyle(height: 1.4)),
+        ),
       ),
     );
   }
@@ -515,8 +561,8 @@ class _ModernCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: const BorderSide(color: Color(0xFFE2E8F0))),
-      child: Padding(padding: const EdgeInsets.all(18), child: child),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26), side: const BorderSide(color: Color(0xFFE2E8F0))),
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22), child: child),
     );
   }
 }
