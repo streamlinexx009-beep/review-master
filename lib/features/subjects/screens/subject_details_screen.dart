@@ -30,22 +30,24 @@ class SubjectDetailsScreen extends ConsumerWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1240),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                 child: Column(
                   children: [
                     _ClassHeader(
                       name: data.name,
                       description: data.description,
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 18),
                     Expanded(
-                      child: TabBarView(
-                        children: [
-                          const _ClassFeedTab(),
-                          _LearningTab(subjectId: subjectId),
-                          const _StudentsTab(),
-                          const _ScoresTab(),
-                        ],
+                      child: _ContentStage(
+                        child: TabBarView(
+                          children: [
+                            const _ClassFeedTab(),
+                            _LearningTab(subjectId: subjectId),
+                            const _StudentsTab(),
+                            const _ScoresTab(),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -69,9 +71,9 @@ class _ClassHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(32, 30, 32, 24),
+      padding: const EdgeInsets.fromLTRB(28, 22, 28, 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(30),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -79,86 +81,89 @@ class _ClassHeader extends StatelessWidget {
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x2214B8A6),
-            blurRadius: 28,
-            offset: Offset(0, 14),
+            color: Color(0x1A14B8A6),
+            blurRadius: 22,
+            offset: Offset(0, 10),
           ),
         ],
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -16,
-            top: 24,
+            right: -8,
+            top: 20,
             child: Icon(
               Icons.school_rounded,
-              color: Colors.white.withOpacity(0.12),
-              size: 164,
+              color: Colors.white.withOpacity(0.10),
+              size: 132,
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: const Text(
-                  'Class Workspace',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: const Text(
+                            'Class Workspace',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            height: 1.08,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          description ?? 'Class details not added yet',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 15),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 18),
-              Text(
-                name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  height: 1.08,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                description ?? 'Class details not added yet',
-                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.13),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.18)),
-                ),
-                child: const Text(
-                  'Start with one tab below: post updates, add learning activities, view students, or check scores.',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.35),
-                ),
-              ),
-              const SizedBox(height: 24),
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white.withOpacity(0.96),
+                  borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: Colors.white.withOpacity(0.55)),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x180F172A),
-                      blurRadius: 18,
-                      offset: Offset(0, 8),
+                      color: Color(0x140F172A),
+                      blurRadius: 16,
+                      offset: Offset(0, 6),
                     ),
                   ],
                 ),
                 child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: TabBar(
                     labelColor: Color(0xFF0F766E),
                     unselectedLabelColor: Color(0xFF64748B),
@@ -182,56 +187,91 @@ class _ClassHeader extends StatelessWidget {
   }
 }
 
+class _ContentStage extends StatelessWidget {
+  final Widget child;
+
+  const _ContentStage({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFDCE5F1), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F0F172A),
+            blurRadius: 24,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class _ClassFeedTab extends StatelessWidget {
   const _ClassFeedTab();
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 32),
-      children: [
-        _SectionIntro(
-          title: 'Class Feed',
-          subtitle: 'Post reminders and announcements students can easily understand.',
-          icon: Icons.campaign_outlined,
-          color: const Color(0xFF0F766E),
-        ),
-        const SizedBox(height: 24),
-        _ModernCard(
-          child: Row(
-            children: [
-              const CircleAvatar(
-                radius: 25,
-                backgroundColor: Color(0xFFCCFBF1),
-                child: Icon(Icons.edit_note_rounded, color: Color(0xFF0F766E)),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Post a class update', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 6),
-                    const Text('Share instructions, reminders, or announcements with your class.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 18),
-              FilledButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Post Update'),
-              ),
-            ],
+    return Scrollbar(
+      thumbVisibility: true,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 36),
+        children: [
+          _SectionIntro(
+            title: 'Class Feed',
+            subtitle: 'Post reminders and announcements students can easily understand.',
+            icon: Icons.campaign_outlined,
+            color: const Color(0xFF0F766E),
           ),
-        ),
-        const SizedBox(height: 20),
-        const _FriendlyNote(
-          icon: Icons.info_outline_rounded,
-          title: 'No updates yet',
-          message: 'Class announcements and reminders will appear here once posted.',
-        ),
-      ],
+          const SizedBox(height: 24),
+          _ModernCard(
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Color(0xFFCCFBF1),
+                  child: Icon(Icons.edit_note_rounded, color: Color(0xFF0F766E)),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Post a class update', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 6),
+                      const Text('Share instructions, reminders, or announcements with your class.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 18),
+                FilledButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Post Update'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const _FriendlyNote(
+            icon: Icons.info_outline_rounded,
+            title: 'No updates yet',
+            message: 'Class announcements and reminders will appear here once posted.',
+          ),
+        ],
+      ),
     );
   }
 }
@@ -243,77 +283,80 @@ class _LearningTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 32),
-      children: [
-        _SectionIntro(
-          title: 'Learning',
-          subtitle: 'Choose one activity to prepare or review. Each card has a clear action for teachers and students.',
-          icon: Icons.auto_stories_outlined,
-          color: const Color(0xFF0EA5E9),
-          trailing: FilledButton.icon(
-            onPressed: () => context.go('/subjects/$subjectId/topics'),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add Topic'),
+    return Scrollbar(
+      thumbVisibility: true,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 36),
+        children: [
+          _SectionIntro(
+            title: 'Learning',
+            subtitle: 'Choose one activity to prepare or review. Each card has a clear action for teachers and students.',
+            icon: Icons.auto_stories_outlined,
+            color: const Color(0xFF0EA5E9),
+            trailing: FilledButton.icon(
+              onPressed: () => context.go('/subjects/$subjectId/topics'),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add Topic'),
+            ),
           ),
-        ),
-        const SizedBox(height: 28),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            var count = 2;
-            if (constraints.maxWidth < 820) count = 1;
+          const SizedBox(height: 28),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              var count = 2;
+              if (constraints.maxWidth < 820) count = 1;
 
-            return GridView.count(
-              crossAxisCount: count,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 24,
-              mainAxisSpacing: 24,
-              childAspectRatio: constraints.maxWidth < 820 ? 2.2 : 2.35,
-              children: [
-                _LearningActionCard(
-                  title: 'Learning Files',
-                  shortLabel: 'PDFs and handouts',
-                  description: 'Handouts, reviewers, modules, and lecture notes for this class.',
-                  icon: Icons.folder_outlined,
-                  color: const Color(0xFF0EA5E9),
-                  primaryLabel: 'Open Files',
-                  onPrimary: () => context.go('/subjects/$subjectId/materials'),
-                  secondaryLabel: 'Upload File',
-                  onSecondary: () => context.go('/subjects/$subjectId/upload-material'),
-                ),
-                _LearningActionCard(
-                  title: 'Review Cards',
-                  shortLabel: 'Quick review',
-                  description: 'Terms, definitions, formulas, and short recall practice.',
-                  icon: Icons.style_outlined,
-                  color: const Color(0xFF8B5CF6),
-                  primaryLabel: 'Open Cards',
-                  onPrimary: () => context.go('/flashcards'),
-                ),
-                _LearningActionCard(
-                  title: 'Tests',
-                  shortLabel: 'Quizzes and exams',
-                  description: 'Create assessments and let students answer them online.',
-                  icon: Icons.quiz_outlined,
-                  color: const Color(0xFFF97316),
-                  primaryLabel: 'Open Tests',
-                  onPrimary: () => context.go('/exams'),
-                ),
-                _LearningActionCard(
-                  title: 'Scores',
-                  shortLabel: 'Results and feedback',
-                  description: 'Review submitted attempts, scores, and class performance.',
-                  icon: Icons.assessment_outlined,
-                  color: const Color(0xFF10B981),
-                  primaryLabel: 'Open Scores',
-                  onPrimary: () => context.go('/results'),
-                ),
-              ],
-            );
-          },
-        ),
-      ],
+              return GridView.count(
+                crossAxisCount: count,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 24,
+                mainAxisSpacing: 24,
+                childAspectRatio: constraints.maxWidth < 820 ? 2.2 : 2.35,
+                children: [
+                  _LearningActionCard(
+                    title: 'Learning Files',
+                    shortLabel: 'PDFs and handouts',
+                    description: 'Handouts, reviewers, modules, and lecture notes for this class.',
+                    icon: Icons.folder_outlined,
+                    color: const Color(0xFF0EA5E9),
+                    primaryLabel: 'Open Files',
+                    onPrimary: () => context.go('/subjects/$subjectId/materials'),
+                    secondaryLabel: 'Upload File',
+                    onSecondary: () => context.go('/subjects/$subjectId/upload-material'),
+                  ),
+                  _LearningActionCard(
+                    title: 'Review Cards',
+                    shortLabel: 'Quick review',
+                    description: 'Terms, definitions, formulas, and short recall practice.',
+                    icon: Icons.style_outlined,
+                    color: const Color(0xFF8B5CF6),
+                    primaryLabel: 'Open Cards',
+                    onPrimary: () => context.go('/flashcards'),
+                  ),
+                  _LearningActionCard(
+                    title: 'Tests',
+                    shortLabel: 'Quizzes and exams',
+                    description: 'Create assessments and let students answer them online.',
+                    icon: Icons.quiz_outlined,
+                    color: const Color(0xFFF97316),
+                    primaryLabel: 'Open Tests',
+                    onPrimary: () => context.go('/exams'),
+                  ),
+                  _LearningActionCard(
+                    title: 'Scores',
+                    shortLabel: 'Results and feedback',
+                    description: 'Review submitted attempts, scores, and class performance.',
+                    icon: Icons.assessment_outlined,
+                    color: const Color(0xFF10B981),
+                    primaryLabel: 'Open Scores',
+                    onPrimary: () => context.go('/results'),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -323,22 +366,25 @@ class _StudentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 32),
-      children: const [
-        _SectionIntro(
-          title: 'Students',
-          subtitle: 'View the people connected to this class.',
-          icon: Icons.people_outline,
-          color: Color(0xFF6366F1),
-        ),
-        SizedBox(height: 24),
-        _FriendlyNote(
-          icon: Icons.groups_outlined,
-          title: 'Class list',
-          message: 'Teachers and enrolled students will be listed here once the class enrollment view is connected.',
-        ),
-      ],
+    return const Scrollbar(
+      thumbVisibility: true,
+      child: ListView(
+        padding: EdgeInsets.only(bottom: 36),
+        children: [
+          _SectionIntro(
+            title: 'Students',
+            subtitle: 'View the people connected to this class.',
+            icon: Icons.people_outline,
+            color: Color(0xFF6366F1),
+          ),
+          SizedBox(height: 24),
+          _FriendlyNote(
+            icon: Icons.groups_outlined,
+            title: 'Class list',
+            message: 'Teachers and enrolled students will be listed here once the class enrollment view is connected.',
+          ),
+        ],
+      ),
     );
   }
 }
@@ -348,45 +394,48 @@ class _ScoresTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 32),
-      children: [
-        const _SectionIntro(
-          title: 'Scores',
-          subtitle: 'Check student results and progress without leaving the class workspace.',
-          icon: Icons.assessment_outlined,
-          color: Color(0xFF10B981),
-        ),
-        const SizedBox(height: 24),
-        _ModernCard(
-          child: Row(
-            children: [
-              const CircleAvatar(
-                radius: 25,
-                backgroundColor: Color(0xFFDCFCE7),
-                child: Icon(Icons.analytics_outlined, color: Color(0xFF16A34A)),
-              ),
-              const SizedBox(width: 18),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Performance and results', style: TextStyle(fontWeight: FontWeight.w900)),
-                    SizedBox(height: 6),
-                    Text('Open the results page or student performance monitor to review submitted work.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 18),
-              FilledButton.icon(
-                onPressed: () => context.go('/results'),
-                icon: const Icon(Icons.open_in_new_rounded),
-                label: const Text('Open Scores'),
-              ),
-            ],
+    return Scrollbar(
+      thumbVisibility: true,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 36),
+        children: [
+          const _SectionIntro(
+            title: 'Scores',
+            subtitle: 'Check student results and progress without leaving the class workspace.',
+            icon: Icons.assessment_outlined,
+            color: Color(0xFF10B981),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+          _ModernCard(
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Color(0xFFDCFCE7),
+                  child: Icon(Icons.analytics_outlined, color: Color(0xFF16A34A)),
+                ),
+                const SizedBox(width: 18),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Performance and results', style: TextStyle(fontWeight: FontWeight.w900)),
+                      SizedBox(height: 6),
+                      Text('Open the results page or student performance monitor to review submitted work.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 18),
+                FilledButton.icon(
+                  onPressed: () => context.go('/results'),
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text('Open Scores'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -411,16 +460,9 @@ class _SectionIntro extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x060F172A),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
       child: Row(
         children: [
