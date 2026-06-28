@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/services/profile_service.dart';
 import '../providers/subject_provider.dart';
 
 class SubjectDetailsScreen extends ConsumerWidget {
@@ -21,39 +22,46 @@ class SubjectDetailsScreen extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text(e.toString())),
       data: (data) {
-        if (data == null) {
-          return const Center(child: Text('Class not found'));
-        }
+        if (data == null) return const Center(child: Text('Class not found'));
 
-        return DefaultTabController(
-          length: 4,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1240),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                child: Column(
-                  children: [
-                    _ClassHeader(
-                      name: data.name,
-                      description: data.description,
+        return FutureBuilder<String?>(
+          future: ProfileService.getUserRole(),
+          builder: (context, roleSnapshot) {
+            final role = roleSnapshot.data;
+            final isTeacher = role == 'instructor' || role == 'admin';
+
+            return DefaultTabController(
+              length: 4,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1240),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                    child: Column(
+                      children: [
+                        _ClassHeader(
+                          name: data.name,
+                          description: data.description,
+                          isTeacher: isTeacher,
+                        ),
+                        const SizedBox(height: 22),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              _ClassFeedTab(isTeacher: isTeacher),
+                              _LearningTab(subjectId: subjectId, isTeacher: isTeacher),
+                              _StudentsTab(isTeacher: isTeacher),
+                              _ScoresTab(isTeacher: isTeacher),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 22),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          const _ClassFeedTab(),
-                          _LearningTab(subjectId: subjectId),
-                          const _StudentsTab(),
-                          const _ScoresTab(),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -63,8 +71,9 @@ class SubjectDetailsScreen extends ConsumerWidget {
 class _ClassHeader extends StatelessWidget {
   final String name;
   final String? description;
+  final bool isTeacher;
 
-  const _ClassHeader({required this.name, required this.description});
+  const _ClassHeader({required this.name, required this.description, required this.isTeacher});
 
   @override
   Widget build(BuildContext context) {
@@ -78,41 +87,24 @@ class _ClassHeader extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A14B8A6),
-            blurRadius: 22,
-            offset: Offset(0, 10),
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x1A14B8A6), blurRadius: 22, offset: Offset(0, 10))],
       ),
       child: Stack(
         children: [
           Positioned(
             right: -8,
             top: 20,
-            child: Icon(
-              Icons.school_rounded,
-              color: Colors.white.withOpacity(0.10),
-              size: 132,
-            ),
+            child: Icon(Icons.school_rounded, color: Colors.white.withOpacity(0.10), size: 132),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: const Text(
-                  'Class Workspace',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(99)),
+                child: Text(
+                  isTeacher ? 'Teacher Class Workspace' : 'Student Class Workspace',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12),
                 ),
               ),
               const SizedBox(height: 12),
@@ -120,12 +112,7 @@ class _ClassHeader extends StatelessWidget {
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  height: 1.08,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 32, height: 1.08, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 6),
               Text(
@@ -141,13 +128,7 @@ class _ClassHeader extends StatelessWidget {
                   color: Colors.white.withOpacity(0.96),
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: Colors.white.withOpacity(0.55)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x140F172A),
-                      blurRadius: 16,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+                  boxShadow: const [BoxShadow(color: Color(0x140F172A), blurRadius: 16, offset: Offset(0, 6))],
                 ),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -175,51 +156,46 @@ class _ClassHeader extends StatelessWidget {
 }
 
 class _ClassFeedTab extends StatelessWidget {
-  const _ClassFeedTab();
+  final bool isTeacher;
+
+  const _ClassFeedTab({required this.isTeacher});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.only(bottom: 36),
       children: [
-        const _PlainSectionHeader(
+        _PlainSectionHeader(
           title: 'Class Feed',
-          subtitle: 'Post reminders and announcements students can easily understand.',
+          subtitle: isTeacher ? 'Post class reminders and announcements.' : 'Read class reminders and announcements from your teacher.',
         ),
         const SizedBox(height: 18),
-        _ModernCard(
-          child: Row(
-            children: [
-              const CircleAvatar(
-                radius: 25,
-                backgroundColor: Color(0xFFCCFBF1),
-                child: Icon(Icons.edit_note_rounded, color: Color(0xFF0F766E)),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Post a class update', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 6),
-                    const Text('Share instructions, reminders, or announcements with your class.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
-                  ],
+        if (isTeacher)
+          _ModernCard(
+            child: Row(
+              children: [
+                const CircleAvatar(radius: 25, backgroundColor: Color(0xFFCCFBF1), child: Icon(Icons.edit_note_rounded, color: Color(0xFF0F766E))),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Post a class update', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 6),
+                      const Text('Share instructions, reminders, or announcements with your class.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 18),
-              FilledButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Post Update'),
-              ),
-            ],
+                const SizedBox(width: 18),
+                FilledButton.icon(onPressed: () {}, icon: const Icon(Icons.add_rounded), label: const Text('Post Update')),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 18),
-        const _FriendlyNote(
+        if (isTeacher) const SizedBox(height: 18),
+        _FriendlyNote(
           icon: Icons.info_outline_rounded,
-          title: 'No updates yet',
-          message: 'Class announcements and reminders will appear here once posted.',
+          title: isTeacher ? 'No updates yet' : 'No teacher updates yet',
+          message: isTeacher ? 'Class announcements and reminders will appear here once posted.' : 'Announcements and reminders from your teacher will appear here.',
         ),
       ],
     );
@@ -228,8 +204,9 @@ class _ClassFeedTab extends StatelessWidget {
 
 class _LearningTab extends StatelessWidget {
   final String subjectId;
+  final bool isTeacher;
 
-  const _LearningTab({required this.subjectId});
+  const _LearningTab({required this.subjectId, required this.isTeacher});
 
   @override
   Widget build(BuildContext context) {
@@ -237,6 +214,7 @@ class _LearningTab extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 36),
       children: [
         _LearningHeader(
+          isTeacher: isTeacher,
           onAddTopic: () => context.go('/subjects/$subjectId/topics'),
         ),
         const SizedBox(height: 22),
@@ -255,47 +233,47 @@ class _LearningTab extends StatelessWidget {
                 _LearningActivityCard(
                   title: 'Learning Files',
                   label: 'PDFs and handouts',
-                  description: 'Handouts, reviewers, modules, and lecture notes for this class.',
+                  description: isTeacher ? 'Upload handouts, reviewers, modules, and lecture notes.' : 'Open handouts, reviewers, modules, and lecture notes from your teacher.',
                   icon: Icons.folder_outlined,
                   color: const Color(0xFF0EA5E9),
                   primaryLabel: 'Open Files',
                   onPrimary: () => context.go('/subjects/$subjectId/materials'),
-                  secondaryLabel: 'Upload File',
-                  onSecondary: () => context.go('/subjects/$subjectId/upload-material'),
+                  secondaryLabel: isTeacher ? 'Upload File' : null,
+                  onSecondary: isTeacher ? () => context.go('/subjects/$subjectId/upload-material') : null,
                 ),
                 _LearningActivityCard(
                   title: 'Review Cards',
                   label: 'Flashcards',
-                  description: 'Create manual flashcards or let AI draft random cards for teacher review.',
+                  description: isTeacher ? 'Create manual flashcards or use AI to draft cards for review.' : 'Study flashcards prepared for this class.',
                   icon: Icons.style_outlined,
                   color: const Color(0xFF8B5CF6),
                   primaryLabel: 'Open Cards',
                   onPrimary: () => context.go('/flashcards'),
-                  secondaryLabel: 'Create Card',
-                  onSecondary: () => _showCreateFlashcardDialog(context, subjectId),
-                  tertiaryLabel: 'AI Generate',
-                  onTertiary: () => context.go('/subjects/$subjectId/ai-tools'),
+                  secondaryLabel: isTeacher ? 'Create Card' : null,
+                  onSecondary: isTeacher ? () => _showCreateFlashcardDialog(context, subjectId) : null,
+                  tertiaryLabel: isTeacher ? 'AI Generate' : null,
+                  onTertiary: isTeacher ? () => context.go('/subjects/$subjectId/ai-tools') : null,
                 ),
                 _LearningActivityCard(
-                  title: 'Tests',
+                  title: isTeacher ? 'Tests' : 'Tests to Take',
                   label: 'Exams and quizzes',
-                  description: 'Create a test manually or use AI to draft questions before saving.',
+                  description: isTeacher ? 'Create a test manually or use AI to draft questions before saving.' : 'Open quizzes and exams assigned by your teacher.',
                   icon: Icons.quiz_outlined,
                   color: const Color(0xFFF97316),
-                  primaryLabel: 'Open Tests',
+                  primaryLabel: isTeacher ? 'Open Tests' : 'Take Tests',
                   onPrimary: () => context.go('/exams'),
-                  secondaryLabel: 'Create Test',
-                  onSecondary: () => context.go('/create-exam'),
-                  tertiaryLabel: 'AI Generate',
-                  onTertiary: () => context.go('/subjects/$subjectId/ai-tools'),
+                  secondaryLabel: isTeacher ? 'Create Test' : null,
+                  onSecondary: isTeacher ? () => context.go('/create-exam') : null,
+                  tertiaryLabel: isTeacher ? 'AI Generate' : null,
+                  onTertiary: isTeacher ? () => context.go('/subjects/$subjectId/ai-tools') : null,
                 ),
                 _LearningActivityCard(
-                  title: 'Scores',
+                  title: isTeacher ? 'Scores' : 'My Scores',
                   label: 'Results and feedback',
-                  description: 'Review submitted attempts, scores, and class performance.',
+                  description: isTeacher ? 'Review submitted attempts, scores, and class performance.' : 'View your scores and answer feedback for this class.',
                   icon: Icons.assessment_outlined,
                   color: const Color(0xFF10B981),
-                  primaryLabel: 'Open Scores',
+                  primaryLabel: isTeacher ? 'Open Scores' : 'My Results',
                   onPrimary: () => context.go('/results'),
                 ),
               ],
@@ -307,30 +285,29 @@ class _LearningTab extends StatelessWidget {
   }
 
   void _showCreateFlashcardDialog(BuildContext context, String subjectId) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => _CreateFlashcardDialog(subjectId: subjectId),
-    );
+    showDialog<void>(context: context, builder: (_) => _CreateFlashcardDialog(subjectId: subjectId));
   }
 }
 
 class _StudentsTab extends StatelessWidget {
-  const _StudentsTab();
+  final bool isTeacher;
+
+  const _StudentsTab({required this.isTeacher});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.only(bottom: 36),
-      children: const [
+      children: [
         _PlainSectionHeader(
-          title: 'Students',
-          subtitle: 'View the people connected to this class.',
+          title: isTeacher ? 'Students' : 'Class People',
+          subtitle: isTeacher ? 'View and monitor students connected to this class.' : 'View your teacher and classmates for this class.',
         ),
-        SizedBox(height: 18),
+        const SizedBox(height: 18),
         _FriendlyNote(
           icon: Icons.groups_outlined,
-          title: 'Class list',
-          message: 'Teachers and enrolled students will be listed here once the class enrollment view is connected.',
+          title: isTeacher ? 'Class list' : 'People list',
+          message: isTeacher ? 'Teachers and enrolled students will be listed here once connected.' : 'Your teacher and classmates will appear here once connected.',
         ),
       ],
     );
@@ -338,42 +315,43 @@ class _StudentsTab extends StatelessWidget {
 }
 
 class _ScoresTab extends StatelessWidget {
-  const _ScoresTab();
+  final bool isTeacher;
+
+  const _ScoresTab({required this.isTeacher});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.only(bottom: 36),
       children: [
-        const _PlainSectionHeader(
-          title: 'Scores',
-          subtitle: 'Check student results and progress without leaving the class workspace.',
+        _PlainSectionHeader(
+          title: isTeacher ? 'Scores' : 'My Scores',
+          subtitle: isTeacher ? 'Check student results and progress.' : 'Check your own scores and exam feedback.',
         ),
         const SizedBox(height: 18),
         _ModernCard(
           child: Row(
             children: [
-              const CircleAvatar(
-                radius: 25,
-                backgroundColor: Color(0xFFDCFCE7),
-                child: Icon(Icons.analytics_outlined, color: Color(0xFF16A34A)),
-              ),
+              const CircleAvatar(radius: 25, backgroundColor: Color(0xFFDCFCE7), child: Icon(Icons.analytics_outlined, color: Color(0xFF16A34A))),
               const SizedBox(width: 18),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Performance and results', style: TextStyle(fontWeight: FontWeight.w900)),
-                    SizedBox(height: 6),
-                    Text('Open the results page or student performance monitor to review submitted work.', style: TextStyle(color: Color(0xFF64748B), height: 1.4)),
+                    Text(isTeacher ? 'Performance and results' : 'My result records', style: const TextStyle(fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 6),
+                    Text(
+                      isTeacher ? 'Open student performance monitoring or result records.' : 'Open your submitted exams, scores, and feedback.',
+                      style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 18),
               FilledButton.icon(
-                onPressed: () => context.go('/results'),
+                onPressed: () => context.go(isTeacher ? '/analytics' : '/results'),
                 icon: const Icon(Icons.open_in_new_rounded),
-                label: const Text('Open Scores'),
+                label: Text(isTeacher ? 'Open Performance' : 'Open My Results'),
               ),
             ],
           ),
@@ -384,32 +362,31 @@ class _ScoresTab extends StatelessWidget {
 }
 
 class _LearningHeader extends StatelessWidget {
+  final bool isTeacher;
   final VoidCallback onAddTopic;
 
-  const _LearningHeader({required this.onAddTopic});
+  const _LearningHeader({required this.isTeacher, required this.onAddTopic});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Expanded(
+        Expanded(
           child: _PlainSectionHeader(
-            title: 'Learning activities',
-            subtitle: 'Choose an activity to prepare, create, or review content for this class.',
+            title: isTeacher ? 'Learning activities' : 'Class learning activities',
+            subtitle: isTeacher ? 'Create, prepare, and review content for this class.' : 'Open the learning activities your teacher prepared.',
           ),
         ),
-        const SizedBox(width: 16),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF0F766E),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        if (isTeacher) ...[
+          const SizedBox(width: 16),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F766E), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16)),
+            onPressed: onAddTopic,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Topic'),
           ),
-          onPressed: onAddTopic,
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Add Topic'),
-        ),
+        ],
       ],
     );
   }
@@ -428,18 +405,9 @@ class _PlainSectionHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF0F172A),
-                ),
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A))),
           const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
-          ),
+          Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), height: 1.4)),
         ],
       ),
     );
@@ -479,10 +447,7 @@ class _LearningActivityCard extends StatelessWidget {
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(26),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26), side: const BorderSide(color: Color(0xFFE2E8F0))),
       child: InkWell(
         borderRadius: BorderRadius.circular(26),
         onTap: onPrimary,
@@ -494,10 +459,7 @@ class _LearningActivityCard extends StatelessWidget {
               Container(
                 width: 58,
                 height: 58,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                decoration: BoxDecoration(color: color.withOpacity(0.14), borderRadius: BorderRadius.circular(20)),
                 child: Icon(icon, color: color, size: 30),
               ),
               const SizedBox(width: 20),
@@ -508,43 +470,22 @@ class _LearningActivityCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                          ),
+                          child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF0F172A))),
                         ),
                         const SizedBox(width: 10),
                         _SoftPill(label: label),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Expanded(
-                      child: Text(
-                        description,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Color(0xFF64748B), height: 1.45),
-                      ),
-                    ),
+                    Expanded(child: Text(description, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF64748B), height: 1.45))),
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 12,
                       runSpacing: 10,
                       children: [
                         _PrimaryActionButton(label: primaryLabel, onPressed: onPrimary),
-                        if (secondaryLabel != null && onSecondary != null)
-                          _SecondaryActionButton(label: secondaryLabel!, onPressed: onSecondary!),
-                        if (tertiaryLabel != null && onTertiary != null)
-                          _SecondaryActionButton(
-                            label: tertiaryLabel!,
-                            onPressed: onTertiary!,
-                            icon: Icons.auto_awesome_rounded,
-                          ),
+                        if (secondaryLabel != null && onSecondary != null) _SecondaryActionButton(label: secondaryLabel!, onPressed: onSecondary!),
+                        if (tertiaryLabel != null && onTertiary != null) _SecondaryActionButton(label: tertiaryLabel!, onPressed: onTertiary!, icon: Icons.auto_awesome_rounded),
                       ],
                     ),
                   ],
@@ -569,11 +510,7 @@ class _PrimaryActionButton extends StatelessWidget {
     return SizedBox(
       width: 140,
       child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFF0F766E),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        ),
+        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0F766E), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14)),
         onPressed: onPressed,
         child: Text(label, textAlign: TextAlign.center),
       ),
@@ -593,11 +530,7 @@ class _SecondaryActionButton extends StatelessWidget {
     return SizedBox(
       width: icon == null ? 140 : 150,
       child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF0F766E),
-          side: const BorderSide(color: Color(0xFF0F766E)),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        ),
+        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF0F766E), side: const BorderSide(color: Color(0xFF0F766E)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
         onPressed: onPressed,
         icon: Icon(icon ?? Icons.add_rounded, size: icon == null ? 0 : 16),
         label: Text(label, textAlign: TextAlign.center),
@@ -615,19 +548,8 @@ class _SoftPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF64748B),
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-        ),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(99), border: Border.all(color: const Color(0xFFE2E8F0))),
+      child: Text(label, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w800, fontSize: 11)),
     );
   }
 }
@@ -681,9 +603,7 @@ class _CreateFlashcardDialogState extends State<_CreateFlashcardDialog> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Flashcard created.')));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
 
     if (mounted) setState(() => saving = false);
@@ -698,25 +618,9 @@ class _CreateFlashcardDialogState extends State<_CreateFlashcardDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: frontController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Front',
-                hintText: 'Question, term, or concept',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            TextField(controller: frontController, maxLines: 2, decoration: const InputDecoration(labelText: 'Front', hintText: 'Question, term, or concept', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: backController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Back',
-                hintText: 'Answer or explanation',
-                border: OutlineInputBorder(),
-              ),
-            ),
+            TextField(controller: backController, maxLines: 4, decoration: const InputDecoration(labelText: 'Back', hintText: 'Answer or explanation', border: OutlineInputBorder())),
           ],
         ),
       ),
@@ -746,10 +650,7 @@ class _FriendlyNote extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         leading: CircleAvatar(radius: 24, child: Icon(icon)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(message, style: const TextStyle(height: 1.4)),
-        ),
+        subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Text(message, style: const TextStyle(height: 1.4))),
       ),
     );
   }
