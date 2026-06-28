@@ -184,9 +184,9 @@ class _PeopleTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ListView(
-      padding: EdgeInsets.all(24),
-      children: [
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: const [
         ListTile(
           leading: Icon(Icons.people_outline),
           title: Text('People'),
@@ -202,9 +202,9 @@ class _GradesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ListView(
-      padding: EdgeInsets.all(24),
-      children: [
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: const [
         ListTile(
           leading: Icon(Icons.grade_outlined),
           title: Text('Grades'),
