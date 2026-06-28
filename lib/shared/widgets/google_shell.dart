@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/services/auth_service.dart';
+import '../../core/services/profile_service.dart';
 
 class GoogleShell extends StatelessWidget {
   final Widget child;
@@ -20,67 +21,86 @@ class GoogleShell extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).size.width > 1000;
     final sidebarWidth = isDesktop ? 292.0 : 96.0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
-      body: Row(
-        children: [
-          Container(
-            width: sidebarWidth,
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0xFFE6EAF0)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0F111827),
-                  blurRadius: 24,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: _Sidebar(
-              expanded: isDesktop,
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-              child: Column(
-                children: [
-                  const GoogleTopBar(),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: ColoredBox(
-                        color: const Color(0xFFF6F8FB),
-                        child: child,
-                      ),
+    return FutureBuilder<String?>(
+      future: ProfileService.getUserRole(),
+      builder: (context, snapshot) {
+        final role = snapshot.data;
+        final isTeacher = role == 'instructor' || role == 'admin';
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF6F8FB),
+          body: Row(
+            children: [
+              Container(
+                width: sidebarWidth,
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: const Color(0xFFE6EAF0)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0F111827),
+                      blurRadius: 24,
+                      offset: Offset(0, 12),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: _Sidebar(
+                  expanded: isDesktop,
+                  selectedIndex: selectedIndex,
+                  isTeacher: isTeacher,
+                  onDestinationSelected: onDestinationSelected,
+                ),
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                  child: Column(
+                    children: [
+                      GoogleTopBar(isTeacher: isTeacher),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: ColoredBox(
+                            color: const Color(0xFFF6F8FB),
+                            child: child,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _Sidebar extends StatelessWidget {
   final bool expanded;
+  final bool isTeacher;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
   const _Sidebar({
     required this.expanded,
+    required this.isTeacher,
     required this.selectedIndex,
     required this.onDestinationSelected,
   });
+
+  void _go(BuildContext context, int index) {
+    if (!isTeacher && index == 2) {
+      context.go('/results');
+      return;
+    }
+    onDestinationSelected(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +125,11 @@ class _Sidebar extends StatelessWidget {
               ),
               if (expanded) ...[
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'ReviewHub',
                         style: TextStyle(
                           fontSize: 20,
@@ -118,8 +138,8 @@ class _Sidebar extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Learning workspace',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        isTeacher ? 'Teacher workspace' : 'Student workspace',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       ),
                     ],
                   ),
@@ -134,41 +154,43 @@ class _Sidebar extends StatelessWidget {
             selected: selectedIndex == 0,
             icon: Icons.dashboard_rounded,
             label: 'Dashboard',
-            onTap: () => onDestinationSelected(0),
+            onTap: () => _go(context, 0),
           ),
           _NavTile(
             expanded: expanded,
             selected: selectedIndex == 1,
             icon: Icons.menu_book_rounded,
-            label: 'Subjects',
+            label: isTeacher ? 'Subjects' : 'My Classes',
             badge: 'Core',
-            onTap: () => onDestinationSelected(1),
+            onTap: () => _go(context, 1),
           ),
           const SizedBox(height: 14),
-          if (expanded) const _SidebarSectionLabel('Insights'),
+          if (expanded) _SidebarSectionLabel(isTeacher ? 'Teaching' : 'Learning'),
           _NavTile(
             expanded: expanded,
             selected: selectedIndex == 2,
-            icon: Icons.insights_rounded,
-            label: 'Student Performance',
-            onTap: () => onDestinationSelected(2),
+            icon: isTeacher ? Icons.insights_rounded : Icons.assessment_rounded,
+            label: isTeacher ? 'Student Performance' : 'My Results',
+            onTap: () => _go(context, 2),
           ),
           _NavTile(
             expanded: expanded,
             selected: selectedIndex == 3,
             icon: Icons.event_note_rounded,
             label: 'Study Planner',
-            onTap: () => onDestinationSelected(3),
+            onTap: () => _go(context, 3),
           ),
-          const SizedBox(height: 14),
-          if (expanded) const _SidebarSectionLabel('Management'),
-          _NavTile(
-            expanded: expanded,
-            selected: selectedIndex == 4,
-            icon: Icons.groups_rounded,
-            label: 'Batches',
-            onTap: () => onDestinationSelected(4),
-          ),
+          if (isTeacher) ...[
+            const SizedBox(height: 14),
+            if (expanded) const _SidebarSectionLabel('Management'),
+            _NavTile(
+              expanded: expanded,
+              selected: selectedIndex == 4,
+              icon: Icons.groups_rounded,
+              label: 'Batches',
+              onTap: () => _go(context, 4),
+            ),
+          ],
           const Spacer(),
           Container(
             width: double.infinity,
@@ -179,19 +201,21 @@ class _Sidebar extends StatelessWidget {
               border: Border.all(color: const Color(0xFFCCFBF1)),
             ),
             child: expanded
-                ? const Column(
+                ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.tips_and_updates_rounded, color: Color(0xFF0F766E)),
-                      SizedBox(height: 10),
-                      Text(
+                      const Icon(Icons.tips_and_updates_rounded, color: Color(0xFF0F766E)),
+                      const SizedBox(height: 10),
+                      const Text(
                         'Tip',
                         style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Open a subject to manage materials, exams, results, and progress.',
-                        style: TextStyle(color: Color(0xFF475569), fontSize: 12),
+                        isTeacher
+                            ? 'Teachers can create class content, AI drafts, exams, batches, and monitor student progress.'
+                            : 'Students can open classes, study materials, take tests, and view their own results.',
+                        style: const TextStyle(color: Color(0xFF475569), fontSize: 12),
                       ),
                     ],
                   )
@@ -309,7 +333,9 @@ class _NavTile extends StatelessWidget {
 }
 
 class GoogleTopBar extends StatelessWidget {
-  const GoogleTopBar({super.key});
+  final bool isTeacher;
+
+  const GoogleTopBar({super.key, required this.isTeacher});
 
   Future<void> _handleMenuAction(BuildContext context, String value) async {
     if (value != 'logout') return;
@@ -345,7 +371,7 @@ class GoogleTopBar extends StatelessWidget {
               height: 46,
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search classes, students, exams, reports...',
+                  hintText: isTeacher ? 'Search classes, students, exams, reports...' : 'Search classes, materials, exams, results...',
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: Container(
                     margin: const EdgeInsets.all(7),
@@ -382,7 +408,7 @@ class GoogleTopBar extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: const Color(0xFF0F766E),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(Icons.person_rounded, color: Colors.white),
             ),
@@ -406,8 +432,8 @@ class _TopBarButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(16),
@@ -417,7 +443,7 @@ class _TopBarButton extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: const Color(0xFF0F172A)),
             const SizedBox(width: 8),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
           ],
         ),
       ),
@@ -434,14 +460,14 @@ class _CircleIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
         width: 48,
         height: 48,
         decoration: BoxDecoration(
           color: const Color(0xFFE0F2FE),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(icon, color: const Color(0xFF0369A1)),
       ),
