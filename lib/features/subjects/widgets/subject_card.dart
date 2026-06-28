@@ -41,28 +41,9 @@ class SubjectCard extends StatelessWidget {
                     right: -26,
                     bottom: -36,
                     child: Icon(
-                      Icons.auto_stories_rounded,
+                      Icons.school_rounded,
                       color: Colors.white.withOpacity(0.16),
                       size: 126,
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: const Text(
-                        'Class',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
                     ),
                   ),
                   Column(
@@ -82,7 +63,7 @@ class SubjectCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        subject.description ?? 'No section details yet',
+                        subject.description ?? 'Class details not added yet',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -102,17 +83,11 @@ class SubjectCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        _MiniChip(icon: Icons.folder_outlined, label: 'Materials'),
-                        const SizedBox(width: 8),
-                        _MiniChip(icon: Icons.quiz_outlined, label: 'Exams'),
-                      ],
-                    ),
+                    const _SimpleTag(icon: Icons.auto_stories_rounded, label: 'Class workspace'),
                     const Spacer(),
                     Text(
-                      'Open this subject to manage modules, students, results, and performance.',
-                      maxLines: 2,
+                      'Open this class to view learning files, review cards, tests, students, and scores.',
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.grey.shade700,
@@ -133,23 +108,11 @@ class SubjectCard extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Open classroom',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: FilledButton.icon(
+                      onPressed: () => context.go('/subjects/${subject.id}'),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: const Text('Open Class'),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Materials',
-                    onPressed: () => context.go('/subjects/${subject.id}/materials'),
-                    icon: const Icon(Icons.folder_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Open subject',
-                    onPressed: () => context.go('/subjects/${subject.id}'),
-                    icon: const Icon(Icons.arrow_forward_rounded),
                   ),
                 ],
               ),
@@ -161,11 +124,11 @@ class SubjectCard extends StatelessWidget {
   }
 }
 
-class _MiniChip extends StatelessWidget {
+class _SimpleTag extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _MiniChip({required this.icon, required this.label});
+  const _SimpleTag({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
