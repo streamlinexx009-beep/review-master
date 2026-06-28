@@ -244,24 +244,44 @@ class _StudentsPanel extends StatelessWidget {
   });
 
   Future<List<_StudentItem>> _loadStudents(String subjectId) async {
+    final batchSubjectRows = await Supabase.instance.client
+        .from('batch_subjects')
+        .select('batch_id')
+        .eq('subject_id', subjectId);
+
+    final batchIds = batchSubjectRows
+        .map<String>((row) => row['batch_id'] as String)
+        .toSet()
+        .toList();
+
+    if (batchIds.isEmpty) {
+      return [];
+    }
+
     final data = await Supabase.instance.client
-        .from('subject_students')
-        .select('student_id, profiles!subject_students_student_id_fkey(id, full_name, email)')
-        .eq('subject_id', subjectId)
+        .from('batch_students')
+        .select('student_id, profiles(id, full_name, email)')
+        .filter('batch_id', 'in', '(${batchIds.join(',')})')
         .order('created_at');
 
-    return data.map<_StudentItem>((row) {
+    final studentsById = <String, _StudentItem>{};
+
+    for (final row in data) {
       final profile = row['profiles'] as Map<String, dynamic>?;
       final id = (profile?['id'] ?? row['student_id']) as String;
       final name = (profile?['full_name'] as String?)?.trim();
       final email = profile?['email'] as String?;
 
-      return _StudentItem(
+      studentsById[id] = _StudentItem(
         id: id,
         name: name == null || name.isEmpty ? email ?? 'Unnamed student' : name,
         email: email,
       );
-    }).toList();
+    }
+
+    final students = studentsById.values.toList();
+    students.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return students;
   }
 
   @override
@@ -284,7 +304,10 @@ class _StudentsPanel extends StatelessWidget {
 
                 final students = snapshot.data ?? [];
                 if (students.isEmpty) {
-                  return const _EmptyHint(icon: Icons.person_off_outlined, message: 'No students enrolled in this subject yet.');
+                  return const _EmptyHint(
+                    icon: Icons.person_off_outlined,
+                    message: 'No students are enrolled through a batch assigned to this subject yet.',
+                  );
                 }
 
                 return ListView.separated(
